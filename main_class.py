@@ -20,7 +20,7 @@ class Film:
         ws = wb.active
         # TODO: Проверить запись в Films.xlsx с использованием только модуля openpyxl.
         #
-        # В этой версии без использования лишнего модуля xlrd
+        # В версии с классами функция переработана без использования модуля xlrd для поиска макс.количества строк
         # rb = xlrd.open_workbook(r'C:\install\Films.xlsx')
         # sheet = rb.sheet_by_index(0)
         ws["A" + str(ws.max_row + 1)] = name
