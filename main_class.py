@@ -74,6 +74,8 @@ class Serial(Film):
 
 
 def path_existence_check(path):
+    """Проверка существования пути и смена рабочей директории
+    """
     if os.path.exists(path):
         os.chdir(path)
         return True
