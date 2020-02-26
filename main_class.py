@@ -19,6 +19,7 @@ class Film:
         self.name = None
         self.short_name = None
         self.clear_name = None
+        self.ext = None  # Отрезанное расширение файла .mkv
         self.file_size = os.path.getsize(self.path + '\\' + self.fullname) / 1024 / 1024 / 1024  # размер файла
 
     def split_fullname(self):
@@ -30,33 +31,33 @@ class Film:
     def copy_to_servdisk(self):
         """Запись на серверный диск
         """
-        self.check_subtitr_film()
-
-        if (self.file_size < 10.0) and not self.check_subtitr_film():
-            self.jenre = self.jenre.capitalize()  # Первый символ строки большой, остальные маленькие
-            #self.copy_film(self.serv_disk + '/Фильмы/' + self.jenre)
+        if self.file_size > 10.0: # Размер файла больше 10 ГБ
+            print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Размер файла {self.fullname} больше 10Гб]")
+            return
+        if self.check_subtitr_film():  # Проверяем есть ли версия без субтитров
+            print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в данной директории]")
+            return
+        self.jenre = self.jenre.capitalize()  # Первый символ строки большой, остальные маленькие
+        if self.copy_film(self.serv_disk + '/Фильмы/' + self.jenre):
             film_jenre = open(self.serv_disk + '/Фильмы/' + self.jenre + '/' + self.jenre + '.doc', 'a+')
             film_jenre.write(self.clear_name + '\t' + self.year + '\n')  # запись в файл жанров
             self.write_films_xlsx()  # запись в Excel
 
-    '''def copy_film(self, destination):
+    def copy_film(self, destination):
         """Копирование файла
         """
         free = psutil.disk_usage(self.serv_disk).free / (1024 * 1024 * 1024)  # свободное место на диске
-        if self.file_size < free:
-            # если фильм помещается на диск и его размер меньше 9 ГБ
-            if os.path.exists(self.serv_disk + '/Фильмы/' + self.jenre + '/' + self.name):
-                continue  # если файл уже есть на диске, то пропускаем его /не отрабатывает для (1)
+        if self.file_size < free:  # Если фильм помещается на диск
+            self.newname_for_copy()  # Переименовываем, если заканчивается на (1)
             if os.path.exists(destination) is False:
                 os.makedirs(destination)  # создаем директорию Жанр к будущему файлу
-            new_name = newname_for_copy(os.path.splitext(spl[2]))  # обрезаем имя для (1)
-            if os.path.exists(destination + '/' + new_name):  # Если файл уже записан, то не копируем
+            if os.path.exists(destination + '/' + self.name):  # Если файл уже записан, то не копируем
                 print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [{self.fullname} уже есть в данной директории]")
+                return False
             else:
-                z = shutil.copy(self.path + '/' + self.fullname, destination + '/' + new_name)
+                z = shutil.copy(self.path + '/' + self.fullname, destination + '/' + self.name)
             print(self.path + '/' + self.fullname + ' СКОПИРОВАНО В ' + destination)
-            new_name = os.path.splitext(new_name)[0]  # name.ext => name
-    '''
+            return True
 
     def copy_to_chiefdisk(self):
         """Запись на диск для шефа
@@ -67,12 +68,19 @@ class Film:
         """ Проверка на существование дубликата без субтитров и посторонних дорожек
         """
         self.split_fullname()
-        self.short_name, ext = os.path.splitext(self.fullname)
-        if (os.path.exists(self.path + '/' + self.short_name + '(1)' + ext)) or \
-                (os.path.exists(self.path + '/' + self.short_name + ' (1)' + ext)):
+        self.short_name, self.ext = os.path.splitext(self.fullname)
+        if (os.path.exists(self.path + '/' + self.short_name + '(1)' + self.ext)) or \
+                (os.path.exists(self.path + '/' + self.short_name + ' (1)' + self.ext)):
             return True
         else:
             return False
+
+    def newname_for_copy(self):
+        """ Переименование фильмов, оканчивающихся на (1). name  = os.path.splitext(spl[2]) = [название, расширение]
+            Это копии без субтитров и лишних дорожек.
+        """
+        if self.clear_name.endswith('(1)'):  # Если название заканчивается на (1), то обрезаем (1)
+            self.name = self.clear_name[:-3].rstrip() + self.ext
 
     def write_films_xlsx(self, season=None):
         """Запись в файл Films.xlsx Сериал-Сезон или Фильм-Жанр-Год
