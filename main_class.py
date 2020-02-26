@@ -31,7 +31,7 @@ class Film:
     def copy_to_servdisk(self):
         """Запись на серверный диск
         """
-        if self.file_size > 10.0: # Размер файла больше 10 ГБ
+        if self.file_size > 10.0:  # Размер файла больше 10 ГБ
             print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Размер файла {self.fullname} больше 10Гб]")
             return
         if self.check_subtitr_film():  # Проверяем есть ли версия без субтитров
@@ -43,10 +43,19 @@ class Film:
             film_jenre.write(self.clear_name + '\t' + self.year + '\n')  # запись в файл жанров
             self.write_films_xlsx()  # запись в Excel
 
+    def copy_to_chiefdisk(self):
+        """Запись на диск для шефа
+        """
+        if self.check_subtitr_film():  # Проверяем есть ли версия без субтитров
+            print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в данной директории]")
+            return
+        self.copy_film(self.chief_disk)
+
     def copy_film(self, destination):
         """Копирование файла
         """
-        free = psutil.disk_usage(self.serv_disk).free / (1024 * 1024 * 1024)  # свободное место на диске
+        disk = destination[:1]
+        free = psutil.disk_usage(disk).free / (1024 * 1024 * 1024)  # свободное место на диске
         if self.file_size < free:  # Если фильм помещается на диск
             self.newname_for_copy()  # Переименовываем, если заканчивается на (1)
             if os.path.exists(destination) is False:
@@ -55,14 +64,9 @@ class Film:
                 print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [{self.fullname} уже есть в данной директории]")
                 return False
             else:
-                z = shutil.copy(self.path + '/' + self.fullname, destination + '/' + self.name)
-            print(self.path + '/' + self.fullname + ' СКОПИРОВАНО В ' + destination)
+                shutil.copy(self.path + '/' + self.fullname, destination + '/' + self.name)
+            print(self.path + '/' + self.fullname + ' СКОПИРОВАНО В ' + destination + '/' + self.name)
             return True
-
-    def copy_to_chiefdisk(self):
-        """Запись на диск для шефа
-        """
-        pass
 
     def check_subtitr_film(self):
         """ Проверка на существование дубликата без субтитров и посторонних дорожек
@@ -129,11 +133,17 @@ if __name__ == "__main__":
     work_paths = (arc_disk + '/Convert', arc_disk + '/New')
     for work_path in work_paths:  # проверяем существуют ли указанные рабочие пути
         if path_existence_check(work_path):
-            pass
+            for adress, dirs, files in os.walk(work_path):
+                if adress == work_path:  # если находимся в корне рабочего пути, то обрабатываем все фильмы
+                    for file in files:
+                        film = Film(file, adress, serv_disk, chief_disk)
+                        film.copy_to_servdisk()
+                        film.copy_to_chiefdisk()
+                else:
+                    for file in files:
+                        serial = Serial(file, adress, serv_disk, chief_disk)
+                        serial.copy_to_servdisk()
+                        serial.copy_to_chiefdisk()
         else:
             continue
-        for adress, dirs, files in os.walk(work_path):
-            if adress == work_path:  # если находимся в корне рабочего пути, то обрабатываем все фильмы
-                for file in files:
-                    film = Film(file, adress, serv_disk, chief_disk)
-                    film.copy_to_servdisk()
+
