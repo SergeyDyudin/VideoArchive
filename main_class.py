@@ -26,6 +26,7 @@ class Film:
         """Разбиваем полное название файла вида жанр_год_название.формат на части
         """
         self.jenre, self.year, self.name = self.fullname.split('_')
+        self.jenre = self.jenre.capitalize()  # Первый символ строки большой, остальные маленькие
         self.clear_name = os.path.splitext(self.name)[0]
 
     def copy_to_servdisk(self):
@@ -37,7 +38,6 @@ class Film:
         if self.check_subtitr_film():  # Проверяем есть ли версия без субтитров
             print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в данной директории]")
             return
-        self.jenre = self.jenre.capitalize()  # Первый символ строки большой, остальные маленькие
         if self.copy_film(self.serv_disk + '/Фильмы/' + self.jenre):
             film_jenre = open(self.serv_disk + '/Фильмы/' + self.jenre + '/' + self.jenre + '.doc', 'a+')
             film_jenre.write(self.clear_name + '\t' + self.year + '\n')  # запись в файл жанров

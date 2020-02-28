@@ -57,7 +57,7 @@ def name_and_season(n, disk, addr, file):
         name = n
 
     while os.path.exists(disk + '/Сериалы/' + name + '/Season ' + str(season)):
-        if ( file != [] and not os.path.exists(disk + '/Сериалы/' + name + '/Season ' + str(season) + '/Episode 1' +
+        if (file != [] and not os.path.exists(disk + '/Сериалы/' + name + '/Season ' + str(season) + '/Episode 1' +
                 os.path.splitext(file[0])[1])) or (file != [] and os.path.getsize(addr + '\\' + file[0]) != os.path.getsize(
                 disk + '/Сериалы/' + name + '/Season ' + str(season) + '/Episode 1' +
                 os.path.splitext(file[0])[1])):
