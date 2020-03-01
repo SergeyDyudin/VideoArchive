@@ -2,7 +2,8 @@ import os
 import shutil
 import psutil
 import openpyxl
-# import xlrd
+import re
+
 
 """Класс для фильмов
 """
@@ -10,17 +11,21 @@ import openpyxl
 
 class Film:
     def __init__(self, name, path, serv, chief):
-        self.fullname = name
+        self.fullname = name  # жанр_год_название.ext
         self.path = path
         self.serv_disk = serv
         self.chief_disk = chief
         self.jenre = None
         self.year = None
-        self.name = None
-        self.short_name = None
-        self.clear_name = None
+        self.name = None  # название.ext
+        self.short_name = None  # жанр_год_название
+        self.clear_name = None  # название
+        self.season = None
         self.ext = None  # Отрезанное расширение файла .mkv
-        self.file_size = os.path.getsize(self.path + '\\' + self.fullname) / 1024 / 1024 / 1024  # размер файла
+        if self.fullname:
+            self.file_size = os.path.getsize(self.path + '\\' + self.fullname) / 1024 / 1024 / 1024
+        else:
+            self.file_size = None
 
     def split_fullname(self):
         """Разбиваем полное название файла вида жанр_год_название.формат на части
@@ -33,11 +38,12 @@ class Film:
         """Запись на серверный диск
         """
         if self.file_size > 10.0:  # Размер файла больше 10 ГБ
-            print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Размер файла {self.fullname} больше 10Гб]")
+            print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Размер файла {self.fullname} больше 10Гб]")
             return
         if self.check_subtitr_film():  # Проверяем есть ли версия без субтитров
-            print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в данной директории]")
+            print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в {self.path}]")
             return
+        self.newname_for_copy()  # Переименовываем, если заканчивается на (1)
         if self.copy_film(self.serv_disk + '/Фильмы/' + self.jenre):
             film_jenre = open(self.serv_disk + '/Фильмы/' + self.jenre + '/' + self.jenre + '.doc', 'a+')
             film_jenre.write(self.clear_name + '\t' + self.year + '\n')  # запись в файл жанров
@@ -47,25 +53,26 @@ class Film:
         """Запись на диск для шефа
         """
         if self.check_subtitr_film():  # Проверяем есть ли версия без субтитров
-            print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в данной директории]")
+            print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в {self.path}]")
             return
+        self.newname_for_copy()  # Переименовываем, если заканчивается на (1)
         self.copy_film(self.chief_disk)
 
     def copy_film(self, destination):
         """Копирование файла
         """
-        disk = destination[:1]
+        disk = destination[:2]
         free = psutil.disk_usage(disk).free / (1024 * 1024 * 1024)  # свободное место на диске
+        self.file_size = os.path.getsize(self.path + '\\' + self.fullname) / 1024 / 1024 / 1024  # размер файла
         if self.file_size < free:  # Если фильм помещается на диск
-            self.newname_for_copy()  # Переименовываем, если заканчивается на (1)
             if os.path.exists(destination) is False:
                 os.makedirs(destination)  # создаем директорию Жанр к будущему файлу
             if os.path.exists(destination + '/' + self.name):  # Если файл уже записан, то не копируем
-                print(f" КОПИРОВАНИЕ НЕ УДАЛОСЬ. [{self.fullname} уже есть в данной директории]")
+                print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [{self.fullname} уже есть в {destination}]")
                 return False
             else:
                 shutil.copy(self.path + '/' + self.fullname, destination + '/' + self.name)
-            print(self.path + '/' + self.fullname + ' СКОПИРОВАНО В ' + destination + '/' + self.name)
+            print(self.path + '\\' + self.fullname + ' СКОПИРОВАНО В ' + destination + '/' + self.name)
             return True
 
     def check_subtitr_film(self):
@@ -84,9 +91,10 @@ class Film:
             Это копии без субтитров и лишних дорожек.
         """
         if self.clear_name.endswith('(1)'):  # Если название заканчивается на (1), то обрезаем (1)
-            self.name = self.clear_name[:-3].rstrip() + self.ext
+            self.clear_name = self.clear_name[:-3].rstrip()
+            self.name = self.clear_name + self.ext
 
-    def write_films_xlsx(self, season=None):
+    def write_films_xlsx(self):
         """Запись в файл Films.xlsx Сериал-Сезон или Фильм-Жанр-Год
            write_films_xlsx(name_name, s, self.jenre, spl[1])
         """
@@ -98,7 +106,7 @@ class Film:
         # rb = xlrd.open_workbook(r'C:\install\Films.xlsx')
         # sheet = rb.sheet_by_index(0)
         ws["A" + str(ws.max_row + 1)] = self.clear_name
-        if season: ws["B" + str(ws.max_row)] = 'Сезон ' + str(season)
+        if self.season: ws["B" + str(ws.max_row)] = 'Сезон ' + str(self.season)
         if self.jenre: ws["B" + str(ws.max_row)] = self.jenre
         if self.year: ws["C" + str(ws.max_row)] = self.year
         wb.save(r'C:\install\Films.xlsx')
@@ -110,9 +118,91 @@ class Film:
 
 
 class Serial(Film):
-    def __init__(self, name, path, serv, chief):
+    def __init__(self, files, path, serv, chief, name=None):
         Film.__init__(self, name, path, serv, chief)
-        season = 1
+        self.season = 1
+        self.files = files
+        self.name = "Episode "
+        self.episode_number = 1
+
+    def name_and_season(self, disk):
+        """Получаем имя и сезон сериала из названия папки. Потом проверяем на наличие сезона в месте назначения и
+            увеличиваем сезон, если он там есть и файлы не совпадают с исходными.
+        """
+        # Отрезаем полное название сериала
+        if os.path.dirname(self.path) == os.getcwd():  # Если имя предыдущей директории совпадает с рабочим путем
+            self.clear_name = os.path.basename(self.path)  # присваиваем имя текущего каталога
+        else:  # иначе присваеваем имя предыдущего каталога (находимся в подкаталоге Номер сезона)
+            self.clear_name = os.path.basename(os.path.dirname(self.path))
+        if not self.clear_name.istitle():  # Проверяем начинается ли с большой буквы имя сериала
+            self.clear_name = self.clear_name.capitalize()
+        if self.clear_name.endswith('сезон)'):
+            self.season = self.clear_name[self.clear_name.find('(') + 1:-6].strip()
+            if not self.season.isdigit():
+                self.season = self.season[0]
+                self.season = int(self.season)
+            self.clear_name = self.clear_name[:self.clear_name.find('(')].strip()
+
+        while os.path.exists(disk + '/Сериалы/' + self.clear_name + '/Season ' + str(self.season)):
+            if (self.files != [] and not os.path.exists(disk + '/Сериалы/' + self.clear_name + '/Season '
+                                        + str(self.season) + '/Episode 1' + os.path.splitext(self.files[0])[1])) or (
+                    self.files != [] and os.path.getsize(self.path + '\\' + self.files[0]) != os.path.getsize(disk
+                + '/Сериалы/' + self.clear_name + '/Season ' + str(self.season) + '/Episode 1'
+                + os.path.splitext(self.files[0])[1])):
+                self.season += 1
+            else:
+                self.season = str(self.season)
+                break
+
+    def find_season(self):
+        """Ищем вхождение строки с сезоном и эпизодом (S01E01 или s01e01) в названии
+        """
+        result = re.search('[s,S][0-9]{1,3}[e,E][0-9]{1,3}', self.fullname)
+        if result:  # отрезаем S от результата => делим строку по букве E и получаем сезон и эпизод
+            self.season, self.episode_number = re.split('[e, E]', result.group(0)[1:])
+            self.episode_number = int(self.episode_number)
+            self.season = str(int(self.season))  # Первращение туда сюда убираем лишние нули в начале номера
+            if self.episode_number > 12:
+                self.episode_number += 1
+            return True
+        return False
+
+    def copy_to_chiefdisk(self):
+        """Копирование на диск шефу
+        """
+        self.files.sort(key=len)
+        self.name_and_season(self.chief_disk)
+        destination = f"{self.chief_disk}/{self.clear_name}/Сезон {self.season}"
+        for self.fullname in self.files:
+            self.ext = os.path.splitext(self.fullname)[1]
+            if self.find_season():  # Если есть подстрока с сезоном, то лучше передалать путь назначения
+                destination = f"{self.serv_disk}/{self.clear_name}/Сезон {self.season}"
+            self.name = "Episode " + str(self.episode_number) + self.ext
+            if self.copy_film(destination):
+                self.episode_number += 1
+                if self.episode_number == 13:  # Второй метод увеличения номера эпизодов для случая, когда нет
+                    self.episode_number += 1  # подстроки S01E01 в названии файла
+            else:
+                return print(f" КОПИРОВАНИЕ {self.clear_name} Cезон {self.season} в {destination} НЕ УДАЛОСЬ")
+
+    def copy_to_servdisk(self):
+        """Копирование на серверный диск
+        """
+        self.files.sort(key=len)
+        self.name_and_season(self.serv_disk)
+        destination = f"{self.serv_disk}/Сериалы/{self.clear_name}/Сезон {self.season}"
+        for self.fullname in self.files:
+            self.ext = os.path.splitext(self.fullname)[1]
+            if self.find_season():  # Если есть подстрока с сезоном, то лучше передалать путь назначения
+                destination = f"{self.serv_disk}/Сериалы/{self.clear_name}/Сезон {self.season}"
+            self.name = "Episode " + str(self.episode_number) + self.ext
+            if self.copy_film(destination):
+                self.episode_number += 1
+                if self.episode_number == 13:
+                    self.episode_number += 1
+            else:
+                return print(f" КОПИРОВАНИЕ {self.clear_name} Cезон {self.season} в {destination} НЕ УДАЛОСЬ")
+        self.write_films_xlsx()
 
 
 def path_existence_check(path):
@@ -130,8 +220,9 @@ if __name__ == "__main__":
     arc_disk = input('Введите букву диска с архивом: ').upper() + ':'
     chief_disk = input('Введите букву диска для записи шефу: ').upper() + ':'
     serv_disk = input('Введите букву диска для записи на видеосервер: ').upper() + ':'
-    work_paths = (arc_disk + '/Convert', arc_disk + '/New')
+    work_paths = (os.path.join(arc_disk, r'\Convert'), os.path.join(arc_disk, r'\New'))
     for work_path in work_paths:  # проверяем существуют ли указанные рабочие пути
+        print("=" * 200)
         if path_existence_check(work_path):
             for adress, dirs, files in os.walk(work_path):
                 if adress == work_path:  # если находимся в корне рабочего пути, то обрабатываем все фильмы
@@ -139,11 +230,12 @@ if __name__ == "__main__":
                         film = Film(file, adress, serv_disk, chief_disk)
                         film.copy_to_servdisk()
                         film.copy_to_chiefdisk()
-                else:
-                    for file in files:
-                        serial = Serial(file, adress, serv_disk, chief_disk)
-                        serial.copy_to_servdisk()
-                        serial.copy_to_chiefdisk()
+                        print("=" * 200)
+                elif not dirs:  # если не в корне, то значит это сериал. Запись происходит когда уже в папке с сериями
+                    serial = Serial(files, adress, serv_disk, chief_disk)
+                    serial.copy_to_servdisk()
+                    print("-"*200)
+                    serial.copy_to_chiefdisk()
+                    print("=" * 200)
         else:
             continue
-
