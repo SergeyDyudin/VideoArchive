@@ -448,4 +448,102 @@
 
 ***
 
-   
+Запишите команду **SELECT**, использующую связанные подзапросы и выбираю­щую имена и номера всех покупателей, рейтинг 
+которых совпадает с максималь­ным значением рейтинга для их города.  
+
+**SELECT** *cnum*, *cname*  
+**FROM** *Customers* outer  
+**WHERE** *rating* =  
+(**SELECT** **МАХ** (*rating*) **FROM** *Customers* inner **WHERE** *inner.city=outer.city*);  
+ 
+ ***
+
+### Оператор EXISTS  
+ 
+**EXISTS** - оператор, генерирующий значение "истина" или "ложь". Используя подзапрос в качестве аргумента, этот 
+оператор оценивает его как истинный, если он генерирует выходные данные, а в противном случае как ложный. В отличие от 
+прочих операторов и предикатов, он не может принимать значение *unknown*.  
+
+***
+
+Нужно извлечь данные из таблицы *Customers* в том случае, если один (или более) покупатель из нее находится в San Jose.  
+
+**SELECT** *cnum*, *cname*, *city*  
+**FROM** *Customers*  
+**WHERE** **EXISTS**  
+(**SELECT** __*__ **FROM** *Customers* **WHERE** *city* = 'san Jose');  
+
+Подзапрос (не являющийся связанным) выполняется только один раз для всего внешнего запроса и, следовательно, имеет 
+единственное значение для всех случаев.
+  
+***
+    
+При применении связанных подзапросов предложение **EXISTS**, как и другие предикатные операторы, оценивается отдельно 
+для каждой строки таблицы, на которую есть ссьmка во внешнем запросе. Это позволяет использовать **EXISTS** как 
+правильный предикат, генерирующий различные ответы для каждой строки таблицы, на которую есть ссылка в основном запросе.
+Следовательно, при таком способе применения **EXIST** информация из внутреннего запроса сохраняется, если 
+непосредственно не выводится.  
+
+Запрос на поиск тех продавцов, которые имеют нескольких покупателей.  
+
+**SELECT** **DISTINCT** *snum*  
+**FROM** *Customers* outer  
+**WHERE** **EXISTS**  
+(**SELECT** __*__ **FROM** *Customers* inner **WHERE** *inner.snum = outer.snum* **AND** *inner.cnum <> outer.cnum*);  
+
+***
+
+### Комбинирование EXISTS и соединений 
+
+Иногда кроме номера требуется получить о каждом продавце больше информации. Это можно сделать соединением таблиц 
+*Customers* и *Salespeople*.  
+
+**SELECT** **DISTINCT** *first.snum, sname, first.city*  
+**FROM** *Salespeople* first, *Customers* second  
+**WHERE** **EXISTS**  
+(**SELECT** __*__ **FROM** *Customers* third **WHERE** *second.snum = third.snum* **AND** *second.cnum <> third.cnum*)  
+**AND** *first.snum = second.snum*;  
+ 
+***
+ 
+**EXISTS** часто используется освместно с **NOT**.  
+
+Один из способов поиска всех продавцов, имеющих только одного покупателя:  
+
+**SELECT** **DISTINCT** *snum*  
+**FROM** *Customers* outer  
+**WHERE NOT EXISTS**  
+(**SELECT** __*__ **FROM** *Customers* inner **WHERE** *inner.snum = outer.snum* **AND** *inner.cnum <> outer.cnum*);  
+ 
+***
+
+Пример, в котором извлекаются строки для всех продавцов, имеющих покупателей, сделавших более одного заказа.  
+
+**SELECT** __*__  
+**FROM** *Salespeople* first  
+**WHERE** **EXISTS**  
+(**SELECT** __*__  
+**FROM** *Customers* second  
+**WHERE** *first.snum = second.snum*  
+**AND** 1 <  (**SELECT COUNT**(__*__) **FROM** *Orders* **WHERE** *Orders.cnum = second.cnum*));   
+
+***
+
+Запрос с **EXISTS** для того, чтобы извлечь всех продавцов, имеющих покупателей с рейтингом, превышающим 300.  
+
+**SELECT** __*__  
+**FROM** *Salespeople* first  
+**WHERE EXISTS**  
+(**SELECT** __*__ **FROM** *Customers* second **WHERE** *first.snum = second.snum* **AND** *rating* = 300);  
+
+***
+
+Решение предыдущего, применяя соединение.
+
+**SELECT** *a.snum, sname, a.city, comm*  
+**FROM** *Salespeople* а, Customers* b  
+**WHERE** *a.snum = b.snum* **AND** *b.rating* = 300;  
+
+***
+
+  
