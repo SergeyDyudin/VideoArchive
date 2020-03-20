@@ -21,16 +21,9 @@ image_counter = 1  # Счетчик для хранения изображени
 
 # Перебирать все страницы, хранящиеся выше
 for page in pages:
-    # Объявление имени файла для каждой страницы PDF как JPG
-    # Для каждой страницы имя файла будет:
-    # PDF page 1 -> page_1.jpg
-    # PDF страница 2 -> page_2.jpg
-    # PDF страница 3 -> page_3.jpg
-    # ....
-    # PDF page n -> page_n.jpg
-    filename = "page_" + str(image_counter) + ".jpg"
+    filename = "page_" + str(image_counter) + ".jpg"  # Объявление имени файла для каждой страницы PDF как JPG
     page.save(filename, 'JPEG')  # Сохранить изображение страницы в системе
-    image_counter = image_counter + 1  # Увеличить счетчик для обновления имени файла
+    image_counter = image_counter + 1
 
 """ Распознавание текста по изображениям с помощью OCR
 """
