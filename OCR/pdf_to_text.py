@@ -29,7 +29,7 @@ for page in pages:
 """
 
 filelimit = image_counter - 1  # Переменная, чтобы получить общее количество страниц
-outfile = "out_text.txt"  # выходной файл с результатом
+outfile = "out_text12.txt"  # выходной файл с результатом
 
 
 f = open(outfile, "a", encoding='utf8')  # Открытие в режиме добавления
