@@ -31,17 +31,34 @@ page[0].save(r"C:\Install\page_3.jpg", 'JPEG')
 """
 outfile = r"C:\Install\out_text.txt"
 f = open(outfile, "w", encoding='utf8')
-text = str(pytesseract.image_to_string(r"C:\Install\page_3_rotate.jpg", 'rus+eng'))
+text = str(pytesseract.image_to_string(r"C:\Install\page_3.jpg", 'rus+eng'))
 text = text.replace('-\n', '')
 text = re.sub('\n[\s]*\n*', '\n', text)  # Удаляем лишние пустые строки
-# f.write(text)
-# f.close()
+
 
 strings = re.split("\n", text)
 list_str = []
 for string in strings:
+    result = re.search('Унифицированная форма', string)
+    if result:
+        continue
     result = re.search('Форма по ОКУД', string)
     if result:
         start_str = result.start()
-        string_new = string[0:start_str]
-    list_str.append(string_new)
+        string = string[0:start_str]
+    result = re.search('по ОКПО', string)
+    if result:
+        start_str = result.start()
+        string = string[0:start_str]
+    result = re.search('Вид деятельности по ОКДП', string)
+    if result:
+        start_str = result.start()
+        string = string[0:start_str]
+    list_str.append(string)
+    result = re.search('ТОВАРНАЯ НАКЛАДНАЯ', string)
+    if result:
+        break
+
+text = '\n'.join(list_str)
+f.write(text)
+f.close()
