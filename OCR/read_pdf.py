@@ -33,9 +33,10 @@ outfile = r"C:\Install\out_text.txt"
 f = open(outfile, "w", encoding='utf8')
 text = str(pytesseract.image_to_string(r"C:\Install\page_3.jpg", 'rus+eng'))
 text = text.replace('-\n', '')
-text = re.sub('\n[\s]*\n*', '\n', text)  # Удаляем лишние пустые строки
 
 
+""" Режем на строки и убираем лишний текст
+"""
 strings = re.split("\n", text)
 list_str = []
 for string in strings:
@@ -60,5 +61,6 @@ for string in strings:
         break
 
 text = '\n'.join(list_str)
+text = re.sub('\n[\s]*\n*', '\n', text)  # Удаляем лишние пустые строки
 f.write(text)
 f.close()
