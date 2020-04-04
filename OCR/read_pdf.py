@@ -1,5 +1,5 @@
 import PyPDF2
-from PIL import Image
+# from PIL import Image
 import pytesseract
 from pdf2image import convert_from_path
 import re
