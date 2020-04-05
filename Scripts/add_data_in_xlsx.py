@@ -1,19 +1,36 @@
 from Scripts.kinopoisk_parser import KinopoiskParser
 import openpyxl
+import time
 
-'''id_film = input('Введите ID: ')
-data = KinopoiskParser(id_film).get_from_kinopoisk()'''
-data = KinopoiskParser().get_from_file('C:/Users/Kenobi/Desktop/Нокдаун.html')
-print(data)
+"""name_film = input('Введите имя фильма: ')
+name_film = name_film.lower()
+year_film = input('Введите год: ')
+film = KinopoiskParser(name=name_film, year=year_film)
+film.find_film_id()
+data = film.get_from_kinopoisk()"""
+# data = KinopoiskParser().get_from_file('C:/Users/Kenobi/Desktop/Нокдаун.html')
+# print(data)
 
 wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
 ws = wb.active
-for row in ws.iter_rows(1, ws.max_row+1):
-    if (row[0].value == data['film_name']) and(row[4].value == int(data['year'])):
+for row in ws.iter_rows(2, ws.max_row+1):
+    name_film = row[0].value.lower()
+    year_film = str(row[4].value)
+    film = KinopoiskParser(name=name_film, year=year_film)
+    id = film.find_film_id()
+    if not id:
+        time.sleep(60)
+        continue
+    data = film.get_from_kinopoisk()
+    if (row[0].value == data['film_name'].replace(':','.')) and (row[4].value == int(data['year'])):
         try:
             row[3].value = data["jenre"]
         except KeyError:
             print('Нет значения жанр')
+        try:
+            row[5].value = data["id_kinopoisk"]
+        except KeyError:
+            print('Нет значения id_kinopoisk')
         try:
             row[6].value = data["imdb"]
         except KeyError:
@@ -35,11 +52,14 @@ for row in ws.iter_rows(1, ws.max_row+1):
         except KeyError:
             print('Нет значения Director')
         try:
-            actors=''
+            actors = ''
             for key, value in data['actors'].items():
                 actors += value + ", "
             row[11].value = actors[:-2]
         except KeyError:
             print('Нет значения Actors')
+    print(f'Получены и записаны данные для {name_film}')
+    wb.save(r'C:\install\Films.xlsx')
+    time.sleep(180)  # задержка между запросами, чтобы не банил Кинопоиск
 wb.save(r'C:\install\Films.xlsx')
 wb.close()

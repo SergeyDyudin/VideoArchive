@@ -65,8 +65,10 @@ class ProxyManager:
 
 
 class KinopoiskParser:
-    def __init__(self, id=None):
+    def __init__(self, id=None, name=None, year=None):
         self.id_film = id
+        self.name_film = name
+        self.year = year
         self.result = {}
 
     @staticmethod
@@ -123,7 +125,33 @@ class KinopoiskParser:
             print('Оценок у фильма еще нет')
         return results
 
-    def get_from_file(self,url=None):
+    def find_film_id(self):
+        """ Получаем страницу поиска по названию и ищем подходящий фильм
+            https://www.kinopoisk.ru/index.php?kp_query=мстители
+        """
+        url = f"https://www.kinopoisk.ru/index.php?kp_query={self.name_film}"
+        get = requests.get(url)
+        content = get.content
+        soup = BeautifulSoup(content, features="html.parser")
+        results = soup.find_all('p', {'class': 'name'})
+        for result in results:
+            try:
+                year = result.find('span', {'class': 'year'}).text
+            except:
+                break
+            if '-' in year:
+                continue
+            """ else:
+                year = int(year)"""
+            name = result.find('a').text
+            if (self.name_film == name.lower()) and (self.year == year):
+                self.id_film = result.find('a')['data-id']
+                return True
+        if not self.id_film:
+            print('Фильм не найден')
+            return False
+
+    def get_from_file(self, url=None):
         """Получение soup из сохраненной странички, а не запроса
         """
         # url = 'C:/Users/Kenobi/Desktop/Avengers.Endgame.html'
@@ -135,7 +163,9 @@ class KinopoiskParser:
         return self.result
 
     def get_from_kinopoisk(self):
-        """Получение soup из запроса к сайту Кинопоиска
+        """Получение soup из запроса к сайту Кинопоиска.
+           Должен быть уже известен self.id_film.
+           Ищем его через find_film_id() по названию
         """
         url = f'https://www.kinopoisk.ru/film/{self.id_film}'
         """ Смена прокси для запроса
@@ -185,15 +215,13 @@ class KinopoiskParser:
         '''if 'captcha' in content:
             raise ValueError('Kinopoisk block this IP. Too many requests')'''
         self.result = self.get_info(content)
+        self.result['id_kinopoisk'] = self.id_film
         return self.result
 
 
-
 if __name__ == '__main__':
-    id = input('Введите ID фильма: ')
-    film = KinopoiskParser(id)
-    #results = film.get_from_file()
-    results = film.get_from_kinopoisk()
-    print(results)
-
-
+    identificator = input('Введите ID фильма: ')
+    film = KinopoiskParser(identificator)
+    # results = film.get_from_file()
+    output = film.get_from_kinopoisk()
+    print(output)
