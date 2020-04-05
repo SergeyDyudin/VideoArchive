@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+from selenium import webdriver
 
 
 class ProxyManager:
@@ -130,7 +131,13 @@ class KinopoiskParser:
             https://www.kinopoisk.ru/index.php?kp_query=мстители
         """
         url = f"https://www.kinopoisk.ru/index.php?kp_query={self.name_film}"
-        get = requests.get(url)
+        # get = requests.get(url)  # Request банит
+        """Запросы через Selenium
+        """
+        browser = webdriver.Firefox()
+        browser.get(url)
+        get = browser.page_source
+        browser.close()
         content = get.content
         soup = BeautifulSoup(content, features="html.parser")
         results = soup.find_all('p', {'class': 'name'})
@@ -209,8 +216,14 @@ class KinopoiskParser:
                 proxy_manager.update_proxy()
                 continue"""
 
-        get = requests.get(url)
+        # get = requests.get(url)
         # text = get.text
+        """Запросы через Selenium
+        """
+        browser = webdriver.Firefox()
+        browser.get(url)
+        get = browser.page_source
+        browser.close()
         content = get.content  # .decode(get.encoding)
         '''if 'captcha' in content:
             raise ValueError('Kinopoisk block this IP. Too many requests')'''

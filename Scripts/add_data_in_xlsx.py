@@ -13,7 +13,7 @@ data = film.get_from_kinopoisk()"""
 
 wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
 ws = wb.active
-for row in ws.iter_rows(2, ws.max_row+1):
+for row in ws.iter_rows(min_row=2, max_row=ws.max_row+1):
     name_film = row[0].value.lower()
     year_film = str(row[4].value)
     film = KinopoiskParser(name=name_film, year=year_film)
