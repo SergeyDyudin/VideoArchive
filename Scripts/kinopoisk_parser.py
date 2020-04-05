@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
 from selenium import webdriver
+from selenium.webdriver.support.wait import WebDriverWait
+import time
 
 
 class ProxyManager:
@@ -134,12 +136,15 @@ class KinopoiskParser:
         # get = requests.get(url)  # Request банит
         """Запросы через Selenium
         """
-        browser = webdriver.Firefox()
+        browser = webdriver.Firefox(firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
+        #browser.firefox_profile.profile_dir = r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk'
         browser.get(url)
+        wait = WebDriverWait(browser, 10)
+        time.sleep(10)
         get = browser.page_source
         browser.close()
-        content = get.content
-        soup = BeautifulSoup(content, features="html.parser")
+        # content = get.content
+        soup = BeautifulSoup(get, features="html.parser")
         results = soup.find_all('p', {'class': 'name'})
         for result in results:
             try:
@@ -222,12 +227,14 @@ class KinopoiskParser:
         """
         browser = webdriver.Firefox()
         browser.get(url)
+        wait = WebDriverWait(browser, 10)
+        time.sleep(10)
         get = browser.page_source
         browser.close()
-        content = get.content  # .decode(get.encoding)
+        # content = get.content  # .decode(get.encoding)
         '''if 'captcha' in content:
             raise ValueError('Kinopoisk block this IP. Too many requests')'''
-        self.result = self.get_info(content)
+        self.result = self.get_info(get)
         self.result['id_kinopoisk'] = self.id_film
         return self.result
 
