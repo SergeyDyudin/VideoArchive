@@ -156,6 +156,7 @@ class KinopoiskParser:
             """ else:
                 year = int(year)"""
             name = result.find('a').text
+            name = name.replace(':','.')
             if (self.name_film == name.lower()) and (self.year == year):
                 self.id_film = result.find('a')['data-id']
                 return True
@@ -223,6 +224,7 @@ class KinopoiskParser:
 
         # get = requests.get(url)
         # text = get.text
+
         """Запросы через Selenium
         """
         browser = webdriver.Firefox()

@@ -106,9 +106,13 @@ class Film:
         # rb = xlrd.open_workbook(r'C:\install\Films.xlsx')
         # sheet = rb.sheet_by_index(0)
         ws["A" + str(ws.max_row + 1)] = self.clear_name
-        if self.season: ws["B" + str(ws.max_row)] = 'Сезон ' + str(self.season)
-        if self.jenre: ws["B" + str(ws.max_row)] = self.jenre
-        if self.year: ws["C" + str(ws.max_row)] = self.year
+        if self.season:
+            ws["C" + str(ws.max_row)] = 'Сезон ' + str(self.season)
+            ws["B" + str(ws.max_row)] = 'Сериал'
+        else:
+            ws["B" + str(ws.max_row)] = 'Фильм'
+        if self.jenre: ws["D" + str(ws.max_row)] = self.jenre
+        if self.year: ws["E" + str(ws.max_row)] = self.year
         wb.save(r'C:\install\Films.xlsx')
         return True
 

@@ -13,13 +13,15 @@ data = film.get_from_kinopoisk()"""
 
 wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
 ws = wb.active
-for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+for row in ws.iter_rows(min_row=409, max_row=412):  # max_row=ws.max_row):
+    if row[1].value == 'Сериал': continue  # пока не трогаем сериалы
+    if not row[4].value: continue  # пока не трогаем первую плохо заполеннную часть таблицы
     name_film = row[0].value.lower()
     year_film = str(row[4].value)
     film = KinopoiskParser(name=name_film, year=year_film)
     id = film.find_film_id()
     if not id:
-        time.sleep(20)
+        time.sleep(10)
         continue
     data = film.get_from_kinopoisk()
     if (row[0].value == data['film_name'].replace(':','.')) and (row[4].value == int(data['year'])):
@@ -60,6 +62,6 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
             print('Нет значения Actors')
     print(f'Получены и записаны данные для {name_film}')
     wb.save(r'C:\install\Films.xlsx')
-    time.sleep(20)  # задержка между запросами, чтобы не банил Кинопоиск
+    time.sleep(10)  # задержка между запросами, чтобы не банил Кинопоиск
 wb.save(r'C:\install\Films.xlsx')
 wb.close()
