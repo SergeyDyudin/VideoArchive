@@ -2,6 +2,10 @@ from Scripts.kinopoisk_parser import KinopoiskParser
 import openpyxl
 import time
 
+""" Данный скрипт заполняет таблицу в Films.xlsx данными из Кинопоиска
+    В таблице заполнены только поля Name, Year и Type(Фильм/Сериал). По этим полям находятся данные на Кинопоиске. 
+"""
+
 """name_film = input('Введите имя фильма: ')
 name_film = name_film.lower()
 year_film = input('Введите год: ')

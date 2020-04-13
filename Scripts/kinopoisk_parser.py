@@ -6,6 +6,9 @@ import time
 
 
 class ProxyManager:
+    """
+    Класс для получения списка доступных прокси с портами и его обновления
+    """
     def __init__(self):
         self._current_proxy_index = 1
         self._proxy_list = []
@@ -68,6 +71,8 @@ class ProxyManager:
 
 
 class KinopoiskParser:
+    """Класс ищет данные фильма по названию и году либо на сайте Кинопоиска, либо на сохраненной локально странице
+    """
     def __init__(self, id=None, name=None, year=None):
         self.id_film = id
         self.name_film = name
@@ -137,7 +142,7 @@ class KinopoiskParser:
         """Запросы через Selenium
         """
         browser = webdriver.Firefox(firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
-        #browser.firefox_profile.profile_dir = r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk'
+        # browser.firefox_profile.profile_dir = r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk'
         browser.get(url)
         wait = WebDriverWait(browser, 10)
         time.sleep(10)
@@ -156,7 +161,7 @@ class KinopoiskParser:
             """ else:
                 year = int(year)"""
             name = result.find('a').text
-            name = name.replace(':','.')
+            name = name.replace(':', '.')
             if (self.name_film == name.lower()) and (self.year == year):
                 self.id_film = result.find('a')['data-id']
                 return True
