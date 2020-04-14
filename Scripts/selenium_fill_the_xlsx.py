@@ -8,7 +8,8 @@ import openpyxl
 from Scripts.kinopoisk_parser import KinopoiskParser
 import time
 
-"""Этот вариант скрипта не банит Кинопоиск
+"""Этот вариант скрипта не банит Кинопоиск при массовом заполнении, в отличии от варианта add_data_in_xlsx.py 
+    с kinopoisk_parser.py.
     Запросы через requests или отдельный запуск selenium для каждого фильма банятся кинопоиском.
     В данном варианте с одной сессии Selenium заполняется вся таблица и бана не происходит.
 """
