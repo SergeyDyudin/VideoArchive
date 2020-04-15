@@ -5,7 +5,7 @@ import openpyxl
 import re
 
 # TODO: Перенести OCR в отдельный проект
-# TODO: создать файлы requirements.txt c необходимыми библиотеками для проектов
+# TODO: создать файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
 
 """Класс для фильмов
 """
