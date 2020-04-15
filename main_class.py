@@ -4,6 +4,8 @@ import psutil
 import openpyxl
 import re
 
+# TODO: Перенести OCR в отдельный проект
+# TODO: создать файлы requirements.txt c необходимыми библиотеками для проектов
 
 """Класс для фильмов
 """
