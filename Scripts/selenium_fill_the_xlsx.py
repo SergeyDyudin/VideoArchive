@@ -25,7 +25,7 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
     if row[1].value == 'Сериал': continue  # пока не трогаем сериалы
     if not row[4].value: continue  # пока не трогаем первую плохо заполеннную часть таблицы, где нет Year
     if row[11].value: continue  # пропускаем уже заполеннные строки
-    name_film = row[0].value.lower()
+    name_film = str(row[0].value).lower()
     year_film = str(row[4].value)
     search_form = browser.find_element_by_name('kp_query')
     search_form.clear()
@@ -40,9 +40,10 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
     results = browser.find_elements_by_class_name('name')
     for result in results:
         try:
+            year = ''
             year = result.find_element_by_class_name('year').text
         except:
-            break
+            continue  # break
         if '-' in year:
             continue
         """ else:
@@ -104,5 +105,5 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
         wb.save(r'C:\install\Films.xlsx')
         print(f'Получены и записаны данные для {name_film}')
     except selenium.common.exceptions.TimeoutException:
-        print('Что-то пошло не так с этим фильмом')
+        print('Что-то пошло не так с этим фильмом ', name_film)
 browser.close()
