@@ -1,5 +1,4 @@
 import selenium
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -17,7 +16,6 @@ import time
 url = 'https://www.kinopoisk.ru/'
 browser = webdriver.Firefox()  # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
 browser.get(url)
-# search_form = browser.find_element_by_name('kp_query')
 
 wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
 ws = wb.active
@@ -106,4 +104,5 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
         print(f'Получены и записаны данные для {name_film}')
     except selenium.common.exceptions.TimeoutException:
         print('Что-то пошло не так с этим фильмом ', name_film)
+wb.close()
 browser.close()
