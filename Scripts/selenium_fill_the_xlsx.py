@@ -17,6 +17,9 @@ import time
     |      |      |        |       |      |              |      |           |         |      |          |        |
 """
 
+def name_comparison(t_name, k_name, t_year, k_year):
+    pass
+
 url = 'https://www.kinopoisk.ru/'
 browser = webdriver.Firefox()  # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
 browser.get(url)
@@ -51,6 +54,7 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
         """ else:
             year = int(year)"""
         name = result.find_element_by_tag_name('a').text
+        # В таблице во всех названиях ':' заменено на '.', т.к. названия файлов не позволяют ставить ':'
         name = name.replace(':', '.')
         # в названиях на Кинопоиске иногда попадаются специальные символы многоточия, которые дают False в сравнении имен
         name = name.replace(chr(8230), '...')
