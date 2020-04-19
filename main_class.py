@@ -116,6 +116,7 @@ class Film:
         if self.jenre: ws["D" + str(ws.max_row)] = self.jenre
         if self.year: ws["E" + str(ws.max_row)] = self.year
         wb.save(r'C:\install\Films.xlsx')
+        wb.close()
         return True
 
 
