@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+import selenium
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -85,6 +86,11 @@ class KinopoiskParser:
 
     @staticmethod
     def get_info(content):
+        """Получение данных фильма с помощью BeautifulSoup.
+
+        :param content: объект, который передается в BeautifulSoup
+        :return: results - словарь с данными
+        """
         # text = self.read_from_file()  # Получаем данные из файла
         soup = BeautifulSoup(content, features="html.parser")
         results = {}
@@ -138,7 +144,8 @@ class KinopoiskParser:
         return results
 
     def find_film_id(self):
-        """ Получаем страницу поиска по названию и ищем подходящий фильм
+        """ Получаем страницу поиска по названию self.name_film и ищем подходящий фильм.
+            Записываем его ID в self.id_film.
             https://www.kinopoisk.ru/index.php?kp_query=мстители
         """
         url = f"https://www.kinopoisk.ru/index.php?kp_query={self.name_film}"
@@ -174,7 +181,10 @@ class KinopoiskParser:
             return False
 
     def get_from_file(self, url=None):
-        """Получение soup из сохраненной странички, а не запроса
+        """Получение soup из сохраненной локально страницы фильма, а не запроса.
+
+        :param url: путь с именем к локально сохраненой странице фильма.
+        :return: self.result - словарь в данными фильма
         """
         # url = 'C:/Users/Kenobi/Desktop/Avengers.Endgame.html'
         if not url:
@@ -185,9 +195,10 @@ class KinopoiskParser:
         return self.result
 
     def get_from_kinopoisk_with_id(self):
-        """Получение soup из запроса к сайту Кинопоиска.
-           Должен быть уже известен self.id_film.
-           Ищем его через find_film_id() по названию
+        """Получение soup из запроса к сайту Кинопоиска по ID фильма. Должен быть уже известен self.id_film.
+        Ищем его через find_film_id() по названию
+
+        :return: self.result - словарь в данными фильма
         """
         url = f'https://www.kinopoisk.ru/film/{self.id_film}'
         """ Смена прокси для запроса
@@ -258,13 +269,38 @@ class KinopoiskParser:
         self.browser = webdriver.Firefox()  # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
         self.browser.get(url)
 
-    def find_on_kinopoisk(self, name_film, year):
-        wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
-        ws = wb.active
-        self.name_film = name_film
-        self.year_film = year
+    def correcting_names(self, name:str):
+        """Корректировка названий из базы и сайта для однородного вида
+
+        :param name: название фильма с сайта
+        :return: name
+        """
         self.name_film = str(self.name_film).lower()
-        self.year_film = str(self.year_film)
+        self.year = str(self.year)
+        name = name.lower()
+        # В таблице во всех названиях ':' заменено на '.', т.к. названия файлов не позволяют ставить ':'
+        name = name.replace(':', '.')
+        # в названиях на Кинопоиске иногда попадаются специальные символы многоточия, которые дают False в сравнении имен
+        name = name.replace(chr(8230), '...')
+        self.name_film = self.name_film.replace(chr(8230), '...')
+        # в названиях на Кинопоиске иногда попадаются символ неразрывного пробела, который дает False в сравнении имен
+        name = name.replace(chr(160), chr(32))
+        # удаляем лишние пробелы в начале и конце
+        self.name = self.name.strip()
+        name = name.strip()
+        return name
+
+    def find_on_kinopoisk(self, name_film, year_film):
+        """
+        В строку поиска на сайте Кинопоиска в Selenium браузере передается название фильма и производится поиск
+        нужного фильма на первой странице поисковой выдачи.
+
+        :param name_film: название фильма из таблицы Films.xlsx
+        :param year_film: год фильма из таблицы Films.xlsx
+        :return:
+        """
+        self.name_film = name_film
+        self.year = year_film
         # запуск поиска на сайте
         search_form = self.browser.find_element_by_name('kp_query')
         search_form.clear()
@@ -280,21 +316,31 @@ class KinopoiskParser:
             except:
                 year = ''
                 continue
-            if '-' in year:
+            if '-' in year:  # '-' в сериалах
                 continue
-            """ else:
-                year = int(year)"""
-            name = result.find_element_by_tag_name('a').text
-            # В таблице во всех названиях ':' заменено на '.', т.к. названия файлов не позволяют ставить ':'
-            name = name.replace(':', '.')
-            # в названиях на Кинопоиске иногда попадаются специальные символы многоточия, которые дают False в сравнении имен
-            name = name.replace(chr(8230), '...')
-            self.name_film = self.name_film.replace(chr(8230), '...')
-            # в названиях на Кинопоиске иногда попадаются символ неразрывного пробела, который дает False в сравнении имен
-            name = name.replace(chr(160), chr(32))
-            if (self.name_film == name.lower()) and (self.year_film == year):
+            # находим название фильма и отправляем его на обработку
+            name = self.correcting_names(result.find_element_by_tag_name('a').text)
+            # если названия и годы совпадают, то переходим на страничку фильма
+            if (self.name_film == name) and (self.year == year):
                 result.find_element_by_tag_name('a').click()
                 break
+        try:
+            WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'info')))
+            WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.ID, 'actorList')))
+            time.sleep(3)
+            get = self.browser.page_source
+            data = KinopoiskParser.get_info(get)
+            # в названиях на Кинопоиске иногда попадаются символ неразрывного пробела, который дает False в сравнении имен
+            data['film_name'] = data['film_name'].replace(chr(160), chr(32))
+            return data
+        except selenium.common.exceptions.TimeoutException:
+            print('Что-то пошло не так с этим фильмом: ', self.name_film)
+
+    def write_data(self):
+        wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
+        ws = wb.active
+        result = self.find_on_kinopoisk(ws.rows)
+
 
 
 
