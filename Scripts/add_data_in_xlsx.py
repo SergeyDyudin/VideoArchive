@@ -6,12 +6,15 @@ import time
     В таблице заполнены только поля Name, Year и Type(Фильм/Сериал). По этим полям находятся данные на Кинопоиске. 
 """
 
+"""UPD: Данный скрипт отрабатывает, если количество запросов 3-4, иначе Кинопоиск увеличивает время ответа на запросы
+"""
+
 """name_film = input('Введите имя фильма: ')
 name_film = name_film.lower()
 year_film = input('Введите год: ')
 film = KinopoiskParser(name=name_film, year=year_film)
 film.find_film_id()
-data = film.get_from_kinopoisk()"""
+data = film.get_from_kinopoisk_with_id()"""
 # data = KinopoiskParser().get_from_file('C:/Users/Kenobi/Desktop/Нокдаун.html')
 # print(data)
 
@@ -27,7 +30,7 @@ for row in ws.iter_rows(min_row=409, max_row=412):  # max_row=ws.max_row):
     if not id:
         time.sleep(10)
         continue
-    data = film.get_from_kinopoisk()
+    data = film.get_from_kinopoisk_with_id()
     if (row[0].value == data['film_name'].replace(':','.')) and (row[4].value == int(data['year'])):
         try:
             row[3].value = data["jenre"]
