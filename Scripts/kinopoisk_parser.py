@@ -262,9 +262,9 @@ class KinopoiskParser:
         wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
         ws = wb.active
         self.name_film = name_film
-        self.year = year
+        self.year_film = year
         self.name_film = str(self.name_film).lower()
-        self.year = str(self.year)
+        self.year_film = str(self.year_film)
         # запуск поиска на сайте
         search_form = self.browser.find_element_by_name('kp_query')
         search_form.clear()
@@ -289,10 +289,10 @@ class KinopoiskParser:
             name = name.replace(':', '.')
             # в названиях на Кинопоиске иногда попадаются специальные символы многоточия, которые дают False в сравнении имен
             name = name.replace(chr(8230), '...')
-            name_film = name_film.replace(chr(8230), '...')
+            self.name_film = self.name_film.replace(chr(8230), '...')
             # в названиях на Кинопоиске иногда попадаются символ неразрывного пробела, который дает False в сравнении имен
             name = name.replace(chr(160), chr(32))
-            if (name_film == name.lower()) and (year_film == year):
+            if (self.name_film == name.lower()) and (self.year_film == year):
                 result.find_element_by_tag_name('a').click()
                 break
 
