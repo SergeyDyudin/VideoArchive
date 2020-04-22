@@ -4,7 +4,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import openpyxl
-from Scripts.kinopoisk_parser import KinopoiskParser
+from kinopoisk_parser import KinopoiskParser
 import time
 
 """Этот вариант скрипта не банит Кинопоиск при массовом заполнении, в отличии от варианта add_data_in_xlsx.py 

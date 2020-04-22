@@ -1,4 +1,4 @@
-from Scripts.kinopoisk_parser import KinopoiskParser
+from kinopoisk_parser import KinopoiskParser
 import openpyxl
 import time
 
