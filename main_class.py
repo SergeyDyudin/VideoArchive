@@ -3,6 +3,7 @@ import shutil
 import psutil
 import openpyxl
 import re
+from kinopoisk_parser import KinopoiskParser
 
 # TODO: Перенести OCR в отдельный проект
 # TODO: создать файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
@@ -12,7 +13,15 @@ import re
 
 
 class Film:
-    def __init__(self, name, path, serv, chief):
+    """Класс занимается переименованием, копированием фильмов, записью в xlsx данных
+    """
+    def __init__(self, name:str, path:str, serv:str, chief:str):
+        """
+        :param name: полное имя файла вида жанр_год_название.ext
+        :param path: путь до name
+        :param serv: имя диска для записи на сервер вида "C:"
+        :param chief: имя диска для просмотра вида "D:"
+        """
         self.fullname = name  # жанр_год_название.ext
         self.path = path
         self.serv_disk = serv
@@ -52,7 +61,7 @@ class Film:
             self.write_films_xlsx()  # запись в Excel
 
     def copy_to_chiefdisk(self):
-        """Запись на диск для шефа
+        """Запись на диск для просмотра
         """
         if self.check_subtitr_film():  # Проверяем есть ли версия без субтитров
             print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в {self.path}]")
@@ -62,6 +71,8 @@ class Film:
 
     def copy_film(self, destination):
         """Копирование файла
+
+        :param destination: путь копирования файла
         """
         disk = destination[:2]
         free = psutil.disk_usage(disk).free / (1024 * 1024 * 1024)  # свободное место на диске
@@ -78,7 +89,8 @@ class Film:
             return True
 
     def check_subtitr_film(self):
-        """ Проверка на существование дубликата без субтитров и посторонних дорожек
+        """ Проверка на существование дубликата без субтитров и посторонних дорожек.
+        Дубликат появляется путем обработки исходника и сохранения с именем+(1)
         """
         self.split_fullname()
         self.short_name, self.ext = os.path.splitext(self.fullname)
@@ -125,7 +137,16 @@ class Film:
 
 
 class Serial(Film):
+    """Класс наследник класса Films. Занимается обработкой сериалов
+    """
     def __init__(self, files, path, serv, chief, name=None):
+        """
+        :param files: список серий
+        :param path: путь до папки с files
+        :param serv: имя диска для записи на сервер вида "C:"
+        :param chief: имя диска для просомтра вида "D:"
+        :param name: None
+        """
         Film.__init__(self, name, path, serv, chief)
         self.season = 1
         self.files = files
@@ -135,6 +156,8 @@ class Serial(Film):
     def name_and_season(self, disk):
         """Получаем имя и сезон сериала из названия папки. Потом проверяем на наличие сезона в месте назначения и
             увеличиваем сезон, если он там есть и файлы не совпадают с исходными.
+
+        :param disk: диск назначения вида "C:"
         """
         # Отрезаем полное название сериала
         if os.path.dirname(self.path) == os.getcwd():  # Если имя предыдущей директории совпадает с рабочим путем
@@ -175,7 +198,7 @@ class Serial(Film):
         return False
 
     def copy_to_chiefdisk(self):
-        """Копирование на диск шефу
+        """Копирование на диск для просмотра
         """
         self.files.sort(key=len)
         self.name_and_season(self.chief_disk)
@@ -214,6 +237,8 @@ class Serial(Film):
 
 def path_existence_check(path):
     """Проверка существования пути и смена рабочей директории
+
+    :param path: путь для проверки
     """
     if os.path.exists(path):
         os.chdir(path)
@@ -228,6 +253,8 @@ if __name__ == "__main__":
     chief_disk = input('Введите букву диска для записи шефу: ').upper() + ':'
     serv_disk = input('Введите букву диска для записи на видеосервер: ').upper() + ':'
     work_paths = (os.path.join(arc_disk, r'\Convert'), os.path.join(arc_disk, r'\New'))
+    browser = KinopoiskParser()
+    browser.open_selenium()
     for work_path in work_paths:  # проверяем существуют ли указанные рабочие пути
         print("=" * 200)
         if path_existence_check(work_path):
@@ -237,6 +264,7 @@ if __name__ == "__main__":
                         film = Film(file, adress, serv_disk, chief_disk)
                         film.copy_to_servdisk()
                         film.copy_to_chiefdisk()
+                        browser.write_data()  # находим и дописываем данные с Кинопоиска
                         print("=" * 200)
                 elif not dirs:  # если не в корне, то значит это сериал. Запись происходит когда уже в папке с сериями
                     serial = Serial(files, adress, serv_disk, chief_disk)
@@ -246,3 +274,4 @@ if __name__ == "__main__":
                     print("=" * 200)
         else:
             continue
+    browser.close_selenium()
