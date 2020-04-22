@@ -17,8 +17,6 @@ import time
     |      |      |        |       |      |              |      |           |         |      |          |        |
 """
 
-def name_comparison(t_name, k_name, t_year, k_year):
-    pass
 
 url = 'https://www.kinopoisk.ru/'
 browser = webdriver.Firefox()  # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
