@@ -3,7 +3,7 @@ import requests
 import selenium
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
 import time
 import openpyxl
@@ -13,6 +13,7 @@ class ProxyManager:
     """
     Класс для получения списка доступных прокси с портами и его обновления
     """
+
     def __init__(self):
         self._current_proxy_index = 1
         self._proxy_list = []
@@ -77,6 +78,7 @@ class ProxyManager:
 class KinopoiskParser:
     """Класс ищет данные фильма по названию и году либо на сайте Кинопоиска, либо на сохраненной локально странице
     """
+
     def __init__(self, id=None, name=None, year=None):
         self.id_film = id
         self.name_film = name
@@ -152,7 +154,8 @@ class KinopoiskParser:
         # get = requests.get(url)  # Request банит
         """Запросы через Selenium
         """
-        browser = webdriver.Firefox(firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
+        browser = webdriver.Firefox(
+            firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
         browser.get(url)
         wait = WebDriverWait(browser, 10)
         time.sleep(10)
@@ -261,6 +264,7 @@ class KinopoiskParser:
 
     """Методы для поиска через Selenium
     """
+
     def open_selenium(self):
         """Запуск Selenium-браузера(Firefox) и переход на сайт Кинопоиска
         """
@@ -268,7 +272,7 @@ class KinopoiskParser:
         self.browser = webdriver.Firefox()  # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
         self.browser.get(url)
 
-    def correcting_names(self, name:str):
+    def correcting_names(self, name: str):
         """Корректировка названий из базы и сайта для однородного вида
 
         :param name: название фильма с сайта
@@ -285,7 +289,7 @@ class KinopoiskParser:
         # в названиях на Кинопоиске иногда попадаются символ неразрывного пробела, который дает False в сравнении имен
         name = name.replace(chr(160), chr(32))
         # удаляем лишние пробелы в начале и конце
-        self.name = self.name.strip()
+        self.name_film = self.name_film.strip()
         name = name.strip()
         return name
 
@@ -306,7 +310,7 @@ class KinopoiskParser:
         search_form.send_keys(self.name_film)
         search_form.submit()
         time.sleep(6)
-        WebDriverWait(self.browser, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'name')))
+        WebDriverWait(self.browser, 10).until(ec.presence_of_all_elements_located((By.CLASS_NAME, 'name')))
         # получение и обход результатов поиска
         results = self.browser.find_elements_by_class_name('name')
         for result in results:
@@ -324,8 +328,8 @@ class KinopoiskParser:
                 result.find_element_by_tag_name('a').click()
                 break
         try:
-            WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'info')))
-            WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.ID, 'actorList')))
+            WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.CLASS_NAME, 'info')))
+            WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID, 'actorList')))
             time.sleep(3)
             get = self.browser.page_source
             data = KinopoiskParser.get_info(get)
@@ -345,7 +349,7 @@ class KinopoiskParser:
         wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
         ws = wb.active
         self.result = self.find_on_kinopoisk(name_film=ws.cell(row=ws.max_row, column=1).value,
-                                        year_film=ws.cell(row=ws.max_row, column=5).value)
+                                             year_film=ws.cell(row=ws.max_row, column=5).value)
         try:
             ws.cell(row=ws.max_row, column=4).value = self.result["jenre"]
         except KeyError:
