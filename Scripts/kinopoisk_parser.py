@@ -153,7 +153,6 @@ class KinopoiskParser:
         """Запросы через Selenium
         """
         browser = webdriver.Firefox(firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
-        # browser.firefox_profile.profile_dir = r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk'
         browser.get(url)
         wait = WebDriverWait(browser, 10)
         time.sleep(10)
@@ -330,19 +329,66 @@ class KinopoiskParser:
             time.sleep(3)
             get = self.browser.page_source
             data = KinopoiskParser.get_info(get)
-            # в названиях на Кинопоиске иногда попадаются символ неразрывного пробела, который дает False в сравнении имен
+            # в названиях на Кинопоиске попадаются символ неразрывного пробела, который дает False в сравнении имен
             data['film_name'] = data['film_name'].replace(chr(160), chr(32))
             return data
         except selenium.common.exceptions.TimeoutException:
             print('Что-то пошло не так с этим фильмом: ', self.name_film)
 
     def write_data(self):
+        """Запись в Films.xlsx данных для последнего фильма.
+        Замечен спецэффект, когда max_row больше количества фактически заполненных строк.
+        В таком случае необходимо в xlsx вручную удалить пустые строки.
+
+        :return:
+        """
         wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
         ws = wb.active
-        result = self.find_on_kinopoisk(ws.rows)
+        self.result = self.find_on_kinopoisk(name_film=ws.cell(row=ws.max_row, column=1).value,
+                                        year_film=ws.cell(row=ws.max_row, column=5).value)
+        try:
+            ws.cell(row=ws.max_row, column=4).value = self.result["jenre"]
+        except KeyError:
+            print('Нет значения жанр')
+        try:
+            ws.cell(row=ws.max_row, column=6).value = self.result["id_kinopoisk"]
+        except KeyError:
+            print('Нет значения id_kinopoisk')
+        try:
+            ws.cell(row=ws.max_row, column=7).value = self.result["imdb"]
+        except KeyError:
+            print('Нет значения IMDB')
+        try:
+            ws.cell(row=ws.max_row, column=8).value = self.result["kinopoisk"]
+        except KeyError:
+            print('Нет значения Kinopoisk')
+        try:
+            ws.cell(row=ws.max_row, column=9).value = self.result["country"]
+        except KeyError:
+            print('Нет значения country')
+        try:
+            ws.cell(row=ws.max_row, column=10).value = self.result["time"]
+        except KeyError:
+            print('Нет значения Time')
+        try:
+            ws.cell(row=ws.max_row, column=11).value = self.result["director"]
+        except KeyError:
+            print('Нет значения Director')
+        try:
+            actors = ''
+            for key, value in self.result['actors'].items():
+                actors += value + ", "
+            ws.cell(row=ws.max_row, column=12).value = actors[:-2]
+        except KeyError:
+            print('Нет значения Actors')
+        wb.save(r'C:\install\Films.xlsx')
+        wb.close()
+        print(f'Получены и записаны данные для {self.name_film}')
 
-
-
+    def close_selenium(self):
+        """Закрытие Selenium браузера
+        """
+        self.browser.close()
 
 
 if __name__ == '__main__':
