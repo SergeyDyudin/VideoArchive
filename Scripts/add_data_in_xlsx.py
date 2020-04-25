@@ -33,7 +33,7 @@ for row in ws.iter_rows(min_row=2, max_row=412):  # max_row=ws.max_row):
     data = film.get_from_kinopoisk_with_id()
     if (row[0].value == data['film_name'].replace(':','.')) and (row[4].value == int(data['year'])):
         try:
-            row[3].value = data["jenre"]
+            row[3].value = data["genre"]
         except KeyError:
             print('Нет значения жанр')
         try:

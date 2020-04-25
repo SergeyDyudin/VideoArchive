@@ -115,8 +115,8 @@ class KinopoiskParser:
                     director = i.nextSibling.text
                     results['director'] = director.strip()
                 if i.text == 'жанр':
-                    jenre = i.nextSibling.find('a').text
-                    results['jenre'] = jenre.strip()
+                    genre = i.nextSibling.find('a').text
+                    results['genre'] = genre.strip()
                 if i.text == 'время':
                     time = i.nextSibling.text
                     results['time'] = time.strip()
@@ -351,7 +351,7 @@ class KinopoiskParser:
         self.result = self.find_on_kinopoisk(name_film=ws.cell(row=ws.max_row, column=1).value,
                                              year_film=ws.cell(row=ws.max_row, column=5).value)
         try:
-            ws.cell(row=ws.max_row, column=4).value = self.result["jenre"]
+            ws.cell(row=ws.max_row, column=4).value = self.result["genre"]
         except KeyError:
             print('Нет значения жанр')
         try:

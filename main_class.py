@@ -26,7 +26,7 @@ class Film:
         self.path = path
         self.serv_disk = serv
         self.chief_disk = chief
-        self.jenre = None
+        self.genre = None
         self.year = None
         self.name = None  # название.ext
         self.short_name = None  # жанр_год_название
@@ -41,8 +41,8 @@ class Film:
     def split_fullname(self):
         """Разбиваем полное название файла вида жанр_год_название.формат на части
         """
-        self.jenre, self.year, self.name = self.fullname.split('_')
-        self.jenre = self.jenre.capitalize()  # Первый символ строки большой, остальные маленькие
+        self.genre, self.year, self.name = self.fullname.split('_')
+        self.genre = self.genre.capitalize()  # Первый символ строки большой, остальные маленькие
         self.clear_name = os.path.splitext(self.name)[0]
 
     def copy_to_servdisk(self):
@@ -55,9 +55,9 @@ class Film:
             print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в {self.path}]")
             return
         self.newname_for_copy()  # Переименовываем, если заканчивается на (1)
-        if self.copy_film(self.serv_disk + '/Фильмы/' + self.jenre):
-            film_jenre = open(self.serv_disk + '/Фильмы/' + self.jenre + '/' + self.jenre + '.doc', 'a+')
-            film_jenre.write(self.clear_name + '\t' + self.year + '\n')  # запись в файл жанров
+        if self.copy_film(self.serv_disk + '/Фильмы/' + self.genre):
+            with open(self.serv_disk + '/Фильмы/' + self.genre + '/' + self.genre + '.doc', 'a+') as film_genre:
+                film_genre.write(self.clear_name + '\t' + self.year + '\n')  # запись в файл жанров
             self.write_films_xlsx()  # запись в Excel
 
     def copy_to_chiefdisk(self):
@@ -110,7 +110,7 @@ class Film:
 
     def write_films_xlsx(self):
         """Запись в файл Films.xlsx Сериал-Сезон или Фильм-Жанр-Год
-           write_films_xlsx(name_name, s, self.jenre, spl[1])
+           write_films_xlsx(name_name, s, self.genre, spl[1])
         """
         wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
         ws = wb.active
@@ -125,7 +125,7 @@ class Film:
             ws["B" + str(ws.max_row)] = 'Сериал'
         else:
             ws["B" + str(ws.max_row)] = 'Фильм'
-        if self.jenre: ws["D" + str(ws.max_row)] = self.jenre
+        if self.genre: ws["D" + str(ws.max_row)] = self.genre
         if self.year: ws["E" + str(ws.max_row)] = self.year
         wb.save(r'C:\install\Films.xlsx')
         wb.close()

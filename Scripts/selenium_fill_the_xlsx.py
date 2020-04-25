@@ -12,7 +12,7 @@ import time
     Запросы через requests или отдельный запуск selenium для каждого фильма банятся кинопоиском.
     В данном варианте с одной сессии Selenium заполняется вся таблица и бана не происходит.
      ____________________________________________________________________________________________________________
-    | Name | Type | Season | Jenre | Year | Kinopoisk ID | IMDB | Kinopoisk | Country | Time | Director | Actors | 
+    | Name | Type | Season | genre | Year | Kinopoisk ID | IMDB | Kinopoisk | Country | Time | Director | Actors | 
      ------+------+--------+-------+------+--------------+------+-----------+---------+------+----------+--------
     |      |      |        |       |      |              |      |           |         |      |          |        |
 """
@@ -72,7 +72,7 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
         data['film_name'] = data['film_name'].replace(chr(160), chr(32))
         # if (row[0].value == data['film_name'].replace(':', '.')) and (row[4].value == int(data['year'])):
         try:
-            row[3].value = data["jenre"]
+            row[3].value = data["genre"]
         except KeyError:
             print('Нет значения жанр')
         try:

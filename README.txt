@@ -29,7 +29,7 @@
  database - содержит Films.xlsx с базой.
  - Films.xlsx изначально содержала только name, jenre\seson, year. Теперь имеет следующий вид:
      ____________________________________________________________________________________________________________
-    | Name | Type | Season | Jenre | Year | Kinopoisk ID | IMDB | Kinopoisk | Country | Time | Director | Actors |
+    | Name | Type | Season | Genre | Year | Kinopoisk ID | IMDB | Kinopoisk | Country | Time | Director | Actors |
      ------+------+--------+-------+------+--------------+------+-----------+---------+------+----------+--------
     |      |      |        |       |      |              |      |           |         |      |          |        |
 

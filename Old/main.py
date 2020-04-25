@@ -18,7 +18,7 @@ def check_subtitr_film(name, extension, a=arc_disk + '/New/'):
         return False
 
 
-def write_films_xlsx(name, season=False, jenre=False, year=False):
+def write_films_xlsx(name, season=False, genre=False, year=False):
     """Запись в файл Films.xlsx Сериал-Сезон или Фильм-Жанр-Год
        write_films_xlsx(name_name, s, spl[0], spl[1])
     """
@@ -28,7 +28,7 @@ def write_films_xlsx(name, season=False, jenre=False, year=False):
     sheet = rb.sheet_by_index(0)
     ws["A" + str(sheet.nrows + 1)] = name
     if season: ws["B" + str(sheet.nrows + 1)] = 'Сезон ' + str(season)
-    if jenre: ws["B" + str(sheet.nrows + 1)] = jenre
+    if genre: ws["B" + str(sheet.nrows + 1)] = genre
     if year: ws["C" + str(sheet.nrows + 1)] = year
     wb.save('C:\install\Films.xlsx')
     return True
@@ -100,10 +100,10 @@ for work_path_i in work_path:
                     print(adress + '\\' + f + ' СКОПИРОВАНО В ' + z)
                     new_name = os.path.splitext(new_name)[0]  # name.ext => name
 
-                    film_jenre = open(serv_disk + '/Фильмы/' + spl[0] + '/' + spl[0] + '.doc', 'a+')
-                    film_jenre.write(new_name + '\t' + spl[1] + '\n')  # запись в файл жанров
+                    film_genre = open(serv_disk + '/Фильмы/' + spl[0] + '/' + spl[0] + '.doc', 'a+')
+                    film_genre.write(new_name + '\t' + spl[1] + '\n')  # запись в файл жанров
 
-                    write_films_xlsx(name=new_name, jenre=spl[0], year=spl[1])
+                    write_films_xlsx(name=new_name, genre=spl[0], year=spl[1])
         else:
             files.sort(key=len)
             if os.path.split(adress)[0] == os.getcwd():
