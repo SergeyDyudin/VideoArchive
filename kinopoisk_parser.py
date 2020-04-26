@@ -363,7 +363,8 @@ class KinopoiskParser:
         try:
             ws.cell(row=ws.max_row, column=6).value = self.result["id_kinopoisk"]
         except KeyError:
-            print('Нет значения id_kinopoisk')
+            pass
+            # print('Нет значения id_kinopoisk')
         try:
             ws.cell(row=ws.max_row, column=7).value = self.result["imdb"]
         except KeyError:

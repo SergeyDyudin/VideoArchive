@@ -4,6 +4,9 @@ import psutil
 import openpyxl
 import re
 from kinopoisk_parser import KinopoiskParser
+import sys
+import time
+from threading import Thread  # для progressbar
 
 # TODO: Перенести OCR в отдельный проект
 # TODO: обновить файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
@@ -59,6 +62,7 @@ class Film:
             with open(self.serv_disk + '/Фильмы/' + self.genre + '/' + self.genre + '.doc', 'a+') as film_genre:
                 film_genre.write(self.clear_name + '\t' + self.year + '\n')  # запись в файл жанров
             self.write_films_xlsx()  # запись в Excel
+            return True
 
     def copy_to_chiefdisk(self):
         """Запись на диск для просмотра
@@ -84,8 +88,16 @@ class Film:
                 print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [{self.fullname} уже есть в {destination}]")
                 return False
             else:
+                Thread(name='ProgressBar', target=self.progress_bar, args=(self.path + '\\' + self.fullname,
+                                                                           destination + '\\' + self.name)).start()
                 shutil.copy(self.path + '/' + self.fullname, destination + '/' + self.name)
-            print(self.path + '\\' + self.fullname + ' СКОПИРОВАНО В ' + destination + '/' + self.name)
+                # Для вывода строки 100% копирования файла
+                # if os.path.getsize(self.path + '/' + self.fullname) == os.path.getsize(destination + '/' + self.name):
+                #     sys.stdout.write('\r')
+                #     sys.stdout.write(f"{int(self.file_size*1024)} / {int(self.file_size*1024)} Mb   [ "
+                #                      + "{:20s}".format('█' * 20) + " ]   100% ")
+                #     sys.stdout.flush()
+            print('\r' + self.path + '\\' + self.fullname + ' СКОПИРОВАНО В ' + destination + '/' + self.name)
             return True
 
     def check_subtitr_film(self):
@@ -130,6 +142,26 @@ class Film:
         wb.save(r'C:\install\Films.xlsx')
         wb.close()
         return True
+
+    def progress_bar(self, source, dest):
+        """ Отрисовывание прогресса копирования в консоли
+
+        :param source: Файл-источник
+        :param dest: Файл назначения
+        :return: sys.stdout.write()
+        """
+        time.sleep(0.02)
+        if os.path.exists(dest):
+            while os.path.getsize(source) != os.path.getsize(dest):
+                sys.stdout.write('\r')
+                percent = int(
+                    (float(os.path.getsize(dest)) / float(os.path.getsize(source))) * 100)
+                steps = int(percent / 5)
+                source_size = int(os.path.getsize(dest) / 1024000)
+                sys.stdout.write(f"{source_size} / {int(self.file_size*1024)} Mb   [ "
+                                 + "{:20s}".format('█' * steps) + f" ]   {percent}%  Копирование {source}")
+                sys.stdout.flush()
+                time.sleep(0.05)
 
 
 """Класс для сериалов
@@ -264,21 +296,21 @@ if __name__ == "__main__":
     with KinopoiskParser() as browser:
         browser.open_selenium()
         for work_path in work_paths:  # проверяем существуют ли указанные рабочие пути
-            print("=" * 200)
+            print("=" * 150)
             if path_existence_check(work_path):
                 for adress, dirs, files in os.walk(work_path):
                     if adress == work_path:  # если находимся в корне рабочего пути, то обрабатываем все фильмы
                         for file in files:
                             film = Film(file, adress, serv_disk, chief_disk)
-                            film.copy_to_servdisk()
+                            if film.copy_to_servdisk():
+                                browser.write_data()  # находим и дописываем данные с Кинопоиска
                             film.copy_to_chiefdisk()
-                            browser.write_data()  # находим и дописываем данные с Кинопоиска
-                            print("=" * 200)
+                            print("=" * 150)
                     elif not dirs:  # если не в корне - значит это сериал. Запись происходит когда уже в папке с сериями
                         serial = Serial(files, adress, serv_disk, chief_disk)
                         serial.copy_to_servdisk()
-                        print("-"*200)
+                        print("-"*150)
                         serial.copy_to_chiefdisk()
-                        print("=" * 200)
+                        print("=" * 150)
             else:
                 continue
