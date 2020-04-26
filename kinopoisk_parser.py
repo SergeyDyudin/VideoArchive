@@ -86,6 +86,12 @@ class KinopoiskParser:
         self.result = {}
         self.browser = None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.browser.close()
+
     @staticmethod
     def get_info(content):
         """Получение данных фильма с помощью BeautifulSoup.
@@ -330,7 +336,7 @@ class KinopoiskParser:
         try:
             WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.CLASS_NAME, 'info')))
             WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID, 'actorList')))
-            time.sleep(3)
+            time.sleep(10)
             get = self.browser.page_source
             data = KinopoiskParser.get_info(get)
             # в названиях на Кинопоиске попадаются символ неразрывного пробела, который дает False в сравнении имен

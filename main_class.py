@@ -6,7 +6,7 @@ import re
 from kinopoisk_parser import KinopoiskParser
 
 # TODO: Перенести OCR в отдельный проект
-# TODO: создать файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
+# TODO: обновить файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
 
 """Класс для фильмов
 """
@@ -15,7 +15,7 @@ from kinopoisk_parser import KinopoiskParser
 class Film:
     """Класс занимается переименованием, копированием фильмов, записью в xlsx данных
     """
-    def __init__(self, name:str, path:str, serv:str, chief:str):
+    def __init__(self, name: str, path: str, serv: str, chief: str):
         """
         :param name: полное имя файла вида жанр_год_название.ext
         :param path: путь до name
@@ -166,6 +166,12 @@ class Serial(Film):
             self.clear_name = os.path.basename(os.path.dirname(self.path))
         if not self.clear_name.istitle():  # Проверяем начинается ли с большой буквы имя сериала
             self.clear_name = self.clear_name.capitalize()
+        # Получем номер сезона, если текущая директория вида "Сезон 1"
+        if re.fullmatch('[С,с]езон \d{1,2}', os.path.basename(self.path)):
+            self.season = re.split(' ', os.path.basename(self.path))[1]
+            if self.clear_name.endswith('сезон)'):
+                self.clear_name = self.clear_name[:self.clear_name.find('(')].strip()
+            return
         if self.clear_name.endswith('сезон)'):
             self.season = self.clear_name[self.clear_name.find('(') + 1:-6].strip()
             if not self.season.isdigit():
@@ -173,25 +179,25 @@ class Serial(Film):
                 self.season = int(self.season)
             self.clear_name = self.clear_name[:self.clear_name.find('(')].strip()
 
-        while os.path.exists(disk + '/Сериалы/' + self.clear_name + '/Season ' + str(self.season)):
-            if (self.files != [] and not os.path.exists(disk + '/Сериалы/' + self.clear_name + '/Season '
-                                        + str(self.season) + '/Episode 1' + os.path.splitext(self.files[0])[1])) or (
-                    self.files != [] and os.path.getsize(self.path + '\\' + self.files[0]) != os.path.getsize(disk
-                + '/Сериалы/' + self.clear_name + '/Season ' + str(self.season) + '/Episode 1'
-                + os.path.splitext(self.files[0])[1])):
-                self.season += 1
-            else:
-                self.season = str(self.season)
-                break
+        # while os.path.exists(disk + '/' + self.clear_name + '/Сезон ' + str(self.season)):
+        #     if (self.files != [] and not os.path.exists(disk + '/' + self.clear_name + '/Сезон '
+        #                                 + str(self.season) + '/Episode 1' + os.path.splitext(self.files[0])[1])) or (
+        #             self.files != [] and os.path.getsize(self.path + '\\' + self.files[0]) != os.path.getsize(disk
+        #         + '/' + self.clear_name + '/Сезон ' + str(self.season) + '/Episode 1'
+        #         + os.path.splitext(self.files[0])[1])):
+        #         self.season += 1
+        #     else:
+        #         self.season = str(self.season)
+        #         break
 
     def find_season(self):
-        """Ищем вхождение строки с сезоном и эпизодом (S01E01 или s01e01) в названии
+        """Ищем вхождение строки с сезоном и эпизодом (S01E01 или s01e01) в названии файла
         """
         result = re.search('[s,S][0-9]{1,3}[e,E][0-9]{1,3}', self.fullname)
         if result:  # отрезаем S от результата => делим строку по букве E и получаем сезон и эпизод
             self.season, self.episode_number = re.split('[e, E]', result.group(0)[1:])
             self.episode_number = int(self.episode_number)
-            self.season = str(int(self.season))  # Первращение туда сюда убираем лишние нули в начале номера
+            self.season = str(int(self.season))  # Первращение туда сюда убирает лишние нули в начале номера
             if self.episode_number > 12:
                 self.episode_number += 1
             return True
@@ -200,6 +206,7 @@ class Serial(Film):
     def copy_to_chiefdisk(self):
         """Копирование на диск для просмотра
         """
+        self.episode_number = 1  # без этого при вызове функции копирования на другой диск номера эпизодов продолжатся
         self.files.sort(key=len)
         self.name_and_season(self.chief_disk)
         destination = f"{self.chief_disk}/{self.clear_name}/Сезон {self.season}"
@@ -218,8 +225,9 @@ class Serial(Film):
     def copy_to_servdisk(self):
         """Копирование на серверный диск
         """
+        self.episode_number = 1  # без этого при вызове функции копирования на другой диск номера эпизодов продолжатся
         self.files.sort(key=len)
-        self.name_and_season(self.serv_disk)
+        self.name_and_season(self.serv_disk + '/Сериалы')  # добавляем /Сериалы, т.к.на серв диске другой итоговый путь
         destination = f"{self.serv_disk}/Сериалы/{self.clear_name}/Сезон {self.season}"
         for self.fullname in self.files:
             self.ext = os.path.splitext(self.fullname)[1]
@@ -250,28 +258,27 @@ def path_existence_check(path):
 
 if __name__ == "__main__":
     arc_disk = input('Введите букву диска с архивом: ').upper() + ':'
-    chief_disk = input('Введите букву диска для записи шефу: ').upper() + ':'
+    chief_disk = input('Введите букву диска для просмотра: ').upper() + ':'
     serv_disk = input('Введите букву диска для записи на видеосервер: ').upper() + ':'
     work_paths = (os.path.join(arc_disk, r'\Convert'), os.path.join(arc_disk, r'\New'))
-    browser = KinopoiskParser()
-    browser.open_selenium()
-    for work_path in work_paths:  # проверяем существуют ли указанные рабочие пути
-        print("=" * 200)
-        if path_existence_check(work_path):
-            for adress, dirs, files in os.walk(work_path):
-                if adress == work_path:  # если находимся в корне рабочего пути, то обрабатываем все фильмы
-                    for file in files:
-                        film = Film(file, adress, serv_disk, chief_disk)
-                        film.copy_to_servdisk()
-                        film.copy_to_chiefdisk()
-                        browser.write_data()  # находим и дописываем данные с Кинопоиска
+    with KinopoiskParser() as browser:
+        browser.open_selenium()
+        for work_path in work_paths:  # проверяем существуют ли указанные рабочие пути
+            print("=" * 200)
+            if path_existence_check(work_path):
+                for adress, dirs, files in os.walk(work_path):
+                    if adress == work_path:  # если находимся в корне рабочего пути, то обрабатываем все фильмы
+                        for file in files:
+                            film = Film(file, adress, serv_disk, chief_disk)
+                            film.copy_to_servdisk()
+                            film.copy_to_chiefdisk()
+                            browser.write_data()  # находим и дописываем данные с Кинопоиска
+                            print("=" * 200)
+                    elif not dirs:  # если не в корне - значит это сериал. Запись происходит когда уже в папке с сериями
+                        serial = Serial(files, adress, serv_disk, chief_disk)
+                        serial.copy_to_servdisk()
+                        print("-"*200)
+                        serial.copy_to_chiefdisk()
                         print("=" * 200)
-                elif not dirs:  # если не в корне, то значит это сериал. Запись происходит когда уже в папке с сериями
-                    serial = Serial(files, adress, serv_disk, chief_disk)
-                    serial.copy_to_servdisk()
-                    print("-"*200)
-                    serial.copy_to_chiefdisk()
-                    print("=" * 200)
-        else:
-            continue
-    browser.close_selenium()
+            else:
+                continue
