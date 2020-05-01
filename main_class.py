@@ -31,7 +31,7 @@ class Film:
         self.chief_disk = chief
         self.genre = None
         self.year = None
-        self.id = None
+        self.id = None  # id на Кинопоиске
         self.name = None  # название.ext
         self.short_name = None  # жанр_год_название
         self.clear_name = None  # название
@@ -219,6 +219,9 @@ class Serial(Film):
             self.clear_name = os.path.basename(self.path)  # присваиваем имя текущего каталога
         else:  # иначе присваеваем имя предыдущего каталога (находимся в подкаталоге Номер сезона)
             self.clear_name = os.path.basename(os.path.dirname(self.path))
+        # [id_serial (3 сезон)] Отрезаем id от названия
+        if re.search('_', self.clear_name):
+            self.id, self.clear_name = re.split('_', self.clear_name)
         if not self.clear_name.istitle():  # Проверяем начинается ли с большой буквы имя сериала
             self.clear_name = self.clear_name.capitalize()
         # Получем номер сезона, если текущая директория вида "Сезон 1"
