@@ -31,6 +31,7 @@ class Film:
         self.chief_disk = chief
         self.genre = None
         self.year = None
+        self.id = None
         self.name = None  # название.ext
         self.short_name = None  # жанр_год_название
         self.clear_name = None  # название
@@ -131,17 +132,39 @@ class Film:
         # В версии с классами функция переработана без использования модуля xlrd для поиска макс.количества строк
         # rb = xlrd.open_workbook(r'C:\install\Films.xlsx')
         # sheet = rb.sheet_by_index(0)
-        ws["A" + str(ws.max_row + 1)] = self.clear_name
+        # ws["A" + str(ws.max_row + 1)] = self.clear_name
+        ws[self._find_column_letter(ws, 'Name')] = self.clear_name
+
         if self.season:
-            ws["C" + str(ws.max_row)] = 'Сезон ' + str(self.season)
-            ws["B" + str(ws.max_row)] = 'Сериал'
+            ws[self._find_column_letter(ws, 'Season')] = 'Сезон ' + str(self.season)
+            ws[self._find_column_letter(ws, 'Type')] = 'Сериал'
         else:
-            ws["B" + str(ws.max_row)] = 'Фильм'
-        if self.genre: ws["D" + str(ws.max_row)] = self.genre
-        if self.year: ws["E" + str(ws.max_row)] = self.year
+            ws[self._find_column_letter(ws, 'Type')] = 'Фильм'
+        if self.genre: ws[self._find_column_letter(ws, 'Genre')] = self.genre
+        if self.year: ws[self._find_column_letter(ws, 'Year')] = self.year
+        if self.id: ws[self._find_column_letter(ws, 'Kinopoisk ID')] = self.id
         wb.save(r'C:\install\Films.xlsx')
         wb.close()
         return True
+
+    @staticmethod
+    def _find_column_letter(sheet, column):
+        """Находим букву столбца по его имени.
+
+        :param sheet: лист Excel
+        :param column: Название нужного столбца
+        :return: letter + номер строки
+        """
+        for cell in sheet[1]:
+            if cell.value == column:
+                if column != 'Name':
+                    return cell.column_letter + str(sheet.max_row)
+                else:
+                    return cell.column_letter + str(sheet.max_row + 1)
+        return sheet.cell(sheet.max_row, sheet.max_column + 1).column_letter + str(sheet.max_row)
+        # letter = (cell.column_letter for cell in sheet[1] if cell.value == column)
+        # if isinstance(next(letter), str):
+        #     return letter + str(sheet.max_row)
 
     def progress_bar(self, source, dest):
         """ Отрисовывание прогресса копирования в консоли
