@@ -7,6 +7,8 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
 import time
 import openpyxl
+import re
+import os
 
 
 class ProxyManager:
@@ -151,6 +153,60 @@ class KinopoiskParser:
             print('Оценок у фильма еще нет')
         return results
 
+    @staticmethod
+    def get_info_hd(content):
+        """Получение данных фильма новой версии Кинопоиск HD с помощью BeautifulSoup.
+
+        :param content: объект, который передается в BeautifulSoup
+        :return: results - словарь с данными
+        """
+
+        soup = BeautifulSoup(content, features="html.parser")
+        results = {}
+        actors = {}
+        results['film_name'] = soup.find('div', {'class': 'film-header-group film-basic-info__title'}).next_element.next.text
+        all_movie_info = soup.find('div', {'class': 'film-info-table film-info-table_color_scheme_grey'})
+        for info in all_movie_info.contents:
+            """Получаем основные данные о фильме
+            """
+            if info.contents[0].text == 'Год производства':
+                year = re.split(' ', info.contents[1].text)[0]  # Отрезаем, т.к. строка может быть 'год (3 сезона)'
+                results['year'] = year.strip()
+            if info.contents[0].text == 'Страна':
+                country = info.contents[1].text
+                results['country'] = country.strip()
+            if info.contents[0].text == 'Режиссер':
+                director = info.contents[1].text
+                results['director'] = director.strip()
+            if info.contents[0].text == 'Жанр':
+                genre = re.split(',', info.contents[1].text)
+                genre = genre[1] if genre[0] == 'ужасы' else genre[0]
+                results['genre'] = genre.strip()
+            if info.contents[0].text == 'Время':
+                time = info.contents[1].text
+                results['time'] = time.strip()
+        """ Получаем актеров фильма
+        """
+        items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents[0].contents
+        for i, item in enumerate(items):
+            actors[i] = item.text
+        try:
+            actors.popitem()  # Удаляем актера "...". Во всех фильмах многоточие в конце списка
+        except KeyError:
+            print('Список актеров пуст!')
+        results['actors'] = actors
+
+        """Получаем оценки фильма
+        """
+        try:
+            kinopoisk = soup.find('a', {'class': "film-rating-value"}).text
+            imdb = str(soup.find('div', {'class': "film-sub-rating"}).contents[0].contents[-1])
+            results['kinopoisk'] = kinopoisk.strip()
+            results['imdb'] = imdb.strip()
+        except AttributeError:
+            print('Оценок у фильма еще нет')
+        return results
+
     def find_film_id(self):
         """ Получаем страницу поиска по названию self.name_film и ищем подходящий фильм.
             Записываем его ID в self.id_film.
@@ -209,62 +265,20 @@ class KinopoiskParser:
         :return: self.result - словарь в данными фильма
         """
         url = f'https://www.kinopoisk.ru/film/{self.id_film}'
-        """ Смена прокси для запроса
-        """
-        # response = requests.Session()
-        """response.headers.update({
-            'Accept': '* / *',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'ru-RU,ru;q =0.9,en-US;q=0.8,en;q=0.7',
-            'Connection': 'keep-alive',
-            'Cookie': 'yandexuid=5009534201542819529;\
-                    i=T1rnooU7wago5S31vAb4g8YMVDvo7XHznxzBGSkLiENlGRVCL0IvKKpjxDkw8jh1XJUW2Uw0BSQWx2KmELPrMPfKsQg =;\
-                    yp=;\
-                    skid=1457655041577010993;\
-                    _ym_uid=1577011031672446783;\
-                    _ym_d=1577011031;\
-                    mda=0;\
-                    yuidss=5009534201542819529;\
-                    ymex=1899219516.\
-                    yrts\
-                    .1583859516;\
-                    ys=c_chck\
-                    .3759072711;\
-                    device_id="b1290f93c20836c0905ee5cb5d347e9c2da593b45";\
-                    active-browser-timestamp=1585838003098',
-            'Host': 'mc.yandex.ru',
-            'Referer': f'http://www.kinopoisk.ru/film/{self.id_film}',
-            'Sec-Fetch-Dest': 'script',
-            'Sec-Fetch-Mode': 'no-cors',
-            'Sec-Fetch-Site': 'cross-site',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
-        })"""
-
-        """proxy_manager = ProxyManager()
-        for _ in range(len(proxy_manager._proxy_list)):
-            try:
-                get = response.get(url, proxies=proxy_manager.get_proxies(), timeout=1)
-                text = get.text
-                break
-            except BaseException:
-                proxy_manager.update_proxy()
-                continue"""
-
-        # get = requests.get(url)
-        # text = get.text
-
-        """Запросы через Selenium
-        """
-        browser = webdriver.Firefox()
-        browser.get(url)
-        wait = WebDriverWait(browser, 10)
+        self.browser.get(url)
+        WebDriverWait(self.browser, 10)
         time.sleep(10)
-        get = browser.page_source
-        browser.close()
+        get = self.browser.page_source
         # content = get.content  # .decode(get.encoding)
         '''if 'captcha' in content:
             raise ValueError('Kinopoisk block this IP. Too many requests')'''
-        self.result = self.get_info(get)
+        # В случае, если откроется страница KinopoiskHD
+        try:
+            self.result = self.get_info(get)
+        except AttributeError:
+            self.result = self.get_info_hd(get)
+        # в названиях на Кинопоиске попадаются символ неразрывного пробела, который дает False в сравнении имен
+        self.result['film_name'] = self.result['film_name'].replace(chr(160), chr(32))
         self.result['id_kinopoisk'] = self.id_film
         return self.result
 
@@ -336,11 +350,13 @@ class KinopoiskParser:
         try:
             WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.CLASS_NAME, 'info')))
             WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID, 'actorList')))
-            time.sleep(10)
+            time.sleep(15)
             get = self.browser.page_source
+            self.id_film = os.path.basename(os.path.dirname(self.browser.current_url))
             data = KinopoiskParser.get_info(get)
             # в названиях на Кинопоиске попадаются символ неразрывного пробела, который дает False в сравнении имен
             data['film_name'] = data['film_name'].replace(chr(160), chr(32))
+            data['id_kinopoisk'] = self.id_film
             return data
         except selenium.common.exceptions.TimeoutException:
             print('Что-то пошло не так с этим фильмом: ', self.name_film)
@@ -354,47 +370,64 @@ class KinopoiskParser:
         """
         wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
         ws = wb.active
-        self.result = self.find_on_kinopoisk(name_film=ws.cell(row=ws.max_row, column=1).value,
-                                             year_film=ws.cell(row=ws.max_row, column=5).value)
+        if ws.cell(row=ws.max_row, column=self._find_column(ws,'Type')).value == 'Фильм':
+            self.result = self.find_on_kinopoisk(name_film=ws.cell(row=ws.max_row,
+                                                                   column=self._find_column(ws,'Name')).value,
+                                                 year_film=ws.cell(row=ws.max_row,
+                                                                   column=self._find_column(ws,'Year')).value)
+        elif ws.cell(row=ws.max_row, column=self._find_column(ws,'Type')).value == 'Сериал':
+            self.id_film = ws.cell(row=ws.max_row, column=self._find_column(ws,'Kinopoisk ID')).value
+            self.result = self.get_from_kinopoisk_with_id()
         try:
-            ws.cell(row=ws.max_row, column=4).value = self.result["genre"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Year')).value = self.result["year"]
+        except KeyError:
+            print('Нет значения год')
+        try:
+            ws.cell(row=ws.max_row, column=self._find_column(ws,'Genre')).value = self.result["genre"]
         except KeyError:
             print('Нет значения жанр')
         try:
-            ws.cell(row=ws.max_row, column=6).value = self.result["id_kinopoisk"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws,'Kinopoisk ID')).value = self.result["id_kinopoisk"]
         except KeyError:
             pass
             # print('Нет значения id_kinopoisk')
         try:
-            ws.cell(row=ws.max_row, column=7).value = self.result["imdb"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws,'IMDB')).value = self.result["imdb"]
         except KeyError:
             print('Нет значения IMDB')
         try:
-            ws.cell(row=ws.max_row, column=8).value = self.result["kinopoisk"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws,'Kinopoisk')).value = self.result["kinopoisk"]
         except KeyError:
             print('Нет значения Kinopoisk')
         try:
-            ws.cell(row=ws.max_row, column=9).value = self.result["country"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws,'Country')).value = self.result["country"]
         except KeyError:
             print('Нет значения country')
         try:
-            ws.cell(row=ws.max_row, column=10).value = self.result["time"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws,'Time')).value = self.result["time"]
         except KeyError:
             print('Нет значения Time')
         try:
-            ws.cell(row=ws.max_row, column=11).value = self.result["director"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws,'Director')).value = self.result["director"]
         except KeyError:
             print('Нет значения Director')
         try:
             actors = ''
             for key, value in self.result['actors'].items():
                 actors += value + ", "
-            ws.cell(row=ws.max_row, column=12).value = actors[:-2]
+            ws.cell(row=ws.max_row, column=self._find_column(ws,'Actors')).value = actors[:-2]
         except KeyError:
             print('Нет значения Actors')
+        self.name_film = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Name')).value
         wb.save(r'C:\install\Films.xlsx')
         wb.close()
-        print(f'Получены и записаны данные для {self.name_film}')
+        print(f'Получены и записаны данные с Кинопоиска для {self.name_film}')
+
+    @staticmethod
+    def _find_column(sheet, name):
+        for cell in sheet[1]:
+            if cell.value == name:
+                return cell.column
 
     def close_selenium(self):
         """Закрытие Selenium браузера

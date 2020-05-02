@@ -297,8 +297,10 @@ class Serial(Film):
                 if self.episode_number == 13:
                     self.episode_number += 1
             else:
-                return print(f" КОПИРОВАНИЕ {self.clear_name} Cезон {self.season} в {destination} НЕ УДАЛОСЬ")
+                print(f" КОПИРОВАНИЕ {self.clear_name} Cезон {self.season} в {destination} НЕ УДАЛОСЬ")
+                return False
         self.write_films_xlsx()
+        return True
 
 
 def path_existence_check(path):
@@ -334,7 +336,8 @@ if __name__ == "__main__":
                             print("=" * 150)
                     elif not dirs:  # если не в корне - значит это сериал. Запись происходит когда уже в папке с сериями
                         serial = Serial(files, adress, serv_disk, chief_disk)
-                        serial.copy_to_servdisk()
+                        if serial.copy_to_servdisk():
+                            browser.write_data()  # находим и дописываем данные с Кинопоиска
                         print("-"*150)
                         serial.copy_to_chiefdisk()
                         print("=" * 150)
