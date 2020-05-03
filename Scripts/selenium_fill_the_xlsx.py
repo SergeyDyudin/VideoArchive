@@ -41,7 +41,8 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
         browser.browser.get(url)
         WebDriverWait(browser, 10)
         time.sleep(5)
-
+    elif str(row[1].value) == 'Фильм' and not row[4].value:  # Если нет даты у фильма
+        continue
     else:
         search_form = browser.browser.find_element_by_name('kp_query')
         search_form.clear()

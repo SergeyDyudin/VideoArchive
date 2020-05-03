@@ -165,7 +165,7 @@ class KinopoiskParser:
         results = {}
         actors = {}
         results['film_name'] = soup.find('div', {'class': 'film-header-group film-basic-info__title'}).next_element.next.text
-        all_movie_info = soup.find('div', {'class': 'film-info-table film-info-table_color_scheme_grey'})
+        all_movie_info = soup.find('div', {'class': 'film-info-table'})  # film-info-table_color_scheme_grey'})
         for info in all_movie_info.contents:
             """Получаем основные данные о фильме
             """
