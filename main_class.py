@@ -6,17 +6,14 @@ import re
 from kinopoisk_parser import KinopoiskParser
 import sys
 import time
-from threading import Thread  # для progressbar
+from threading import Thread  # для рисования progressbar
 
 # TODO: Перенести OCR в отдельный проект
 # TODO: обновить файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
 
-"""Класс для фильмов
-"""
-
-
+# Класс для фильмов
 class Film:
-    """Класс занимается переименованием, копированием фильмов, записью в xlsx данных
+    """Класс занимается переименованием, копированием фильмов, записью в xlsx данных.
     """
     def __init__(self, name: str, path: str, serv: str, chief: str):
         """
@@ -43,14 +40,15 @@ class Film:
             self.file_size = None
 
     def split_fullname(self):
-        """Разбиваем полное название файла вида жанр_год_название.формат на части
-        """
+        """Разбиваем полное название файла вида жанр_год_название.формат на части"""
         self.genre, self.year, self.name = self.fullname.split('_')
         self.genre = self.genre.capitalize()  # Первый символ строки большой, остальные маленькие
         self.clear_name = os.path.splitext(self.name)[0]
 
     def copy_to_servdisk(self):
-        """Запись на серверный диск
+        """Запись на серверный диск.
+
+        :return: True -- если копирование удалось, иначе вывод строки об ошибке копирования.
         """
         if self.file_size > 10.0:  # Размер файла больше 10 ГБ
             print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Размер файла {self.fullname} больше 10Гб]")
@@ -66,8 +64,7 @@ class Film:
             return True
 
     def copy_to_chiefdisk(self):
-        """Запись на диск для просмотра
-        """
+        """Запись на диск для просмотра."""
         if self.check_subtitr_film():  # Проверяем есть ли версия без субтитров
             print(f"КОПИРОВАНИЕ НЕ УДАЛОСЬ. [Имеется измененная версия {self.fullname} в {self.path}]")
             return
@@ -75,9 +72,14 @@ class Film:
         self.copy_film(self.chief_disk)
 
     def copy_film(self, destination):
-        """Копирование файла
+        """Копирование файла.
+
+        В случае невозможности копирования файла выводится поясняеющее сообщение.
+        Для отображения progressbar при копировании используется еще один поток, сравниваюищй размеры конечного и
+        исходного файлов.
 
         :param destination: путь копирования файла
+        :return bool: маркер удачного копирования файла
         """
         disk = destination[:2]
         free = psutil.disk_usage(disk).free / (1024 * 1024 * 1024)  # свободное место на диске
@@ -102,8 +104,12 @@ class Film:
             return True
 
     def check_subtitr_film(self):
-        """ Проверка на существование дубликата без субтитров и посторонних дорожек.
-        Дубликат появляется путем обработки исходника и сохранения с именем+(1)
+        """Проверка на существование дубликата без субтитров и посторонних дорожек.
+
+        Дубликат появляется путем обработки(конвертации, удаления дорожек, субтитров) исходника и сохранения в той же
+        директории с именем "имя (1)".
+
+        :return bool: наличие или отсутствие такого файла
         """
         self.split_fullname()
         self.short_name, self.ext = os.path.splitext(self.fullname)
@@ -114,25 +120,33 @@ class Film:
             return False
 
     def newname_for_copy(self):
-        """ Переименование фильмов, оканчивающихся на (1). name  = os.path.splitext(spl[2]) = [название, расширение]
-            Это копии без субтитров и лишних дорожек.
+        """ Изменение имени фильмов, оканчивающихся на (1).
+
+        Изменяется только имя для копирования, сам файл не переименовывается.
+        Это обработка копии без субтитров и лишних дорожек. Именно их и записываем на диски. Оригинал не пишем.
+        name  = os.path.splitext(spl[2]) == [название, расширение]
         """
         if self.clear_name.endswith('(1)'):  # Если название заканчивается на (1), то обрезаем (1)
             self.clear_name = self.clear_name[:-3].rstrip()
             self.name = self.clear_name + self.ext
 
     def write_films_xlsx(self):
-        """Запись в файл Films.xlsx Сериал-Сезон или Фильм-Жанр-Год
-           write_films_xlsx(name_name, s, self.genre, spl[1])
+        """Запись в файл Films.xlsx
+
+        Данные записываются в таблицу в следующие столбцы:
+        Сериал - Name | Type | Season | Kinopoisk ID
+        Фильм  - Name | Type | Genre | Year
+
+        :return True: в случае успешной записи
         """
         wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
         ws = wb.active
         # TODO: Проверить запись в Films.xlsx с использованием только модуля openpyxl.
-        #
         # В версии с классами функция переработана без использования модуля xlrd для поиска макс.количества строк
         # rb = xlrd.open_workbook(r'C:\install\Films.xlsx')
         # sheet = rb.sheet_by_index(0)
-        # ws["A" + str(ws.max_row + 1)] = self.clear_name
+
+        # ws["A" + str(ws.max_row + 1)] = self.clear_name  # Без использования self._find_column_letter()
         ws[self._find_column_letter(ws, 'Name')] = self.clear_name
 
         if self.season:
@@ -149,7 +163,7 @@ class Film:
 
     @staticmethod
     def _find_column_letter(sheet, column):
-        """Находим букву столбца по его имени.
+        """Находит букву столбца по его имени.
 
         :param sheet: лист Excel
         :param column: Название нужного столбца
@@ -169,6 +183,8 @@ class Film:
     def progress_bar(self, source, dest):
         """ Отрисовывание прогресса копирования в консоли
 
+        Никогда не отрисует 100%, т.к. цикл прервется при совпадении размеров файлов.
+
         :param source: Файл-источник
         :param dest: Файл назначения
         :return: sys.stdout.write()
@@ -187,12 +203,11 @@ class Film:
                 time.sleep(0.05)
 
 
-"""Класс для сериалов
-"""
-
-
+# Класс для сериалов
 class Serial(Film):
-    """Класс наследник класса Films. Занимается обработкой сериалов
+    """Класс-наследник класса Films. Занимается обработкой сериалов.
+
+    В отличии от класса Films, ему передается не название фильма, а список серий сериала из текущей папки.
     """
     def __init__(self, files, path, serv, chief, name=None):
         """
@@ -209,8 +224,14 @@ class Serial(Film):
         self.episode_number = 1
 
     def name_and_season(self, disk):
-        """Получаем имя и сезон сериала из названия папки. Потом проверяем на наличие сезона в месте назначения и
-            увеличиваем сезон, если он там есть и файлы не совпадают с исходными.
+        """Нахождение имени и сезона сериала по именам папок в пути.
+
+        Проверяем различные комбинации структуры и именования папок сериала.
+        Получаем имя и сезон сериала из названий папкок. Если сезон не указан ни коим образом в названиях, то
+        его значение остается "1" по-умолчанию.
+
+        #неактуально на текущий момент: Потом проверяем на наличие сезона в месте назначения и
+        увеличиваем сезон, если он там есть и файлы не совпадают с исходными(закомментированный участок кода).
 
         :param disk: диск назначения вида "C:"
         """
@@ -249,7 +270,12 @@ class Serial(Film):
         #         break
 
     def find_season(self):
-        """Ищем вхождение строки с сезоном и эпизодом (S01E01 или s01e01) в названии файла
+        """Поиск вхождения подстроки с сезоном и эпизодом (S01E01 или s01e01) в названии файла.
+
+        Теоретически более точный способ получить правильные сезон и номер серии, чем метод name_and_season()
+        Дополнительно делает смещение нумерации серий, пропуская 13 (личная хотелка).
+
+        :return bool: маркер получения номера сезона и эпизода из названия серии
         """
         result = re.search('[s,S][0-9]{1,3}[e,E][0-9]{1,3}', self.fullname)
         if result:  # отрезаем S от результата => делим строку по букве E и получаем сезон и эпизод
@@ -262,15 +288,14 @@ class Serial(Film):
         return False
 
     def copy_to_chiefdisk(self):
-        """Копирование на диск для просмотра
-        """
+        """Копирование на диск для просмотра."""
         self.episode_number = 1  # без этого при вызове функции копирования на другой диск номера эпизодов продолжатся
         self.files.sort(key=len)
         self.name_and_season(self.chief_disk)
         destination = f"{self.chief_disk}/{self.clear_name}/Сезон {self.season}"
         for self.fullname in self.files:
             self.ext = os.path.splitext(self.fullname)[1]
-            if self.find_season():  # Если есть подстрока с сезоном, то лучше передалать путь назначения
+            if self.find_season():  # Если есть подстрока с сезоном, то лучше переделать путь назначения
                 destination = f"{self.serv_disk}/{self.clear_name}/Сезон {self.season}"
             self.name = "Episode " + str(self.episode_number) + self.ext
             if self.copy_film(destination):
@@ -281,7 +306,9 @@ class Serial(Film):
                 return print(f" КОПИРОВАНИЕ {self.clear_name} Cезон {self.season} в {destination} НЕ УДАЛОСЬ")
 
     def copy_to_servdisk(self):
-        """Копирование на серверный диск
+        """Копирование на серверный диск.
+
+        :return bool: маркер успешного копирования
         """
         self.episode_number = 1  # без этого при вызове функции копирования на другой диск номера эпизодов продолжатся
         self.files.sort(key=len)
@@ -304,9 +331,10 @@ class Serial(Film):
 
 
 def path_existence_check(path):
-    """Проверка существования пути и смена рабочей директории
+    """Проверка существования пути и смена рабочей директории.
 
     :param path: путь для проверки
+    :return bool: маркер смены пути
     """
     if os.path.exists(path):
         os.chdir(path)

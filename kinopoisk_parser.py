@@ -1,3 +1,7 @@
+"""
+ProxyManager: класс для получения прокси-сервера
+KinopoiskParser: класс для работы с Кинопоиском
+"""
 from bs4 import BeautifulSoup
 import requests
 import selenium
@@ -24,6 +28,12 @@ class ProxyManager:
         self._current_proxy_s = f'https://{self._proxy_list[0]}'
 
     def get_proxies(self):
+        """
+        Получить прокси.
+
+        :return: proxies -- словарь из http и https адресов с портом для одного прокси
+        """
+
         """proxy_ip_with_port = self._proxy_list[self._current_proxy_index]
         self._current_proxy = f'http://{proxy_ip_with_port}'
         self._current_proxy_s = f'https://{proxy_ip_with_port}'"""
@@ -35,6 +45,11 @@ class ProxyManager:
         return proxies
 
     def update_proxy(self):
+        """
+        Взятие из списка прокси-серверов следующего значения.
+
+        :return: self._current_proxy -- следующий http-прокси из списка
+        """
         self._current_proxy_index += 1
         if self._current_proxy_index == len(self._proxy_list):
             print("Proxies are ended")
@@ -59,6 +74,13 @@ class ProxyManager:
 
     @staticmethod
     def _get_another_proxy():
+        """
+        Получить новый прокси-сервер из запроса к API сайта.
+
+        https://api.getproxylist.com/proxy?protocol[]=http каждый раз при запросе выдает новый прокси
+
+        :return: proxy -- строка вида ip:port
+        """
         proxy_response = requests.get("https://api.getproxylist.com/proxy?protocol[]=http", headers={
             'Content-Type': 'application/json'
         }).json()
@@ -70,6 +92,11 @@ class ProxyManager:
         return proxy
 
     def _get_proxy_list(self):
+        """
+        Получить новый список прокси-серверов.
+
+        :return: self._proxy_list - строки серверов с портами
+        """
         proxy_response = requests.get("http://www.freeproxy-list.ru/api/proxy?anonymity=false&token=demo")
         # proxy_response = requests.get("http://api.foxtools.ru/v2/Proxy.txt?cp=UTF-8&lang=Auto&type=\
         # HTTPS&anonymity=None&available=Yes&free=Yes&page=1")
@@ -78,7 +105,13 @@ class ProxyManager:
 
 
 class KinopoiskParser:
-    """Класс ищет данные фильма по названию и году либо на сайте Кинопоиска, либо на сохраненной локально странице
+    """Получение данных о фильме или сериале.
+
+    Класс ищет данные фильма по названию и году либо на сайте Кинопоиска, либо на сохраненной локально странице.
+    Класс ищет данные сериала по ID сериала, указанному в таблице xlsx. ID получать из URL на странице сериала,
+    либо параметра в коде страницы.
+    На данный момент поиск актуален через использование Selenium-браузера, т.к. остальные варинаты получают бан, капчу
+    или увеличивающиеся задержки в выдаче ответа.
     """
 
     def __init__(self, id=None, name=None, year=None):
@@ -140,8 +173,7 @@ class KinopoiskParser:
             print('Список актеров пуст!')
         results['actors'] = actors
 
-        """Получаем оценки фильма
-        """
+        # Получаем оценки фильма
         try:
             kinopoisk = soup.find('div', {'class': "block_2"}).find('div', {'class': 'div1'}).text
             imdb = soup.find('div', {'class': "block_2"}).find('div', {'class': 'div1'}).nextSibling.nextSibling.text
@@ -167,8 +199,7 @@ class KinopoiskParser:
         results['film_name'] = soup.find('div', {'class': 'film-header-group film-basic-info__title'}).next_element.next.text
         all_movie_info = soup.find('div', {'class': 'film-info-table film-info-table_color_scheme_grey'})
         for info in all_movie_info.contents:
-            """Получаем основные данные о фильме
-            """
+            # Получаем основные данные о фильме
             if info.contents[0].text == 'Год производства':
                 year = re.split(' ', info.contents[1].text)[0]  # Отрезаем, т.к. строка может быть 'год (3 сезона)'
                 results['year'] = year.strip()
@@ -185,8 +216,7 @@ class KinopoiskParser:
             if info.contents[0].text == 'Время':
                 time = info.contents[1].text
                 results['time'] = time.strip()
-        """ Получаем актеров фильма
-        """
+        # Получаем актеров фильма
         items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents[0].contents
         for i, item in enumerate(items):
             actors[i] = item.text
@@ -196,8 +226,7 @@ class KinopoiskParser:
             print('Список актеров пуст!')
         results['actors'] = actors
 
-        """Получаем оценки фильма
-        """
+        # Получаем оценки фильма
         try:
             kinopoisk = soup.find('a', {'class': "film-rating-value"}).text
             imdb = str(soup.find('div', {'class': "film-sub-rating"}).contents[0].contents[-1])
@@ -208,14 +237,18 @@ class KinopoiskParser:
         return results
 
     def find_film_id(self):
-        """ Получаем страницу поиска по названию self.name_film и ищем подходящий фильм.
-            Записываем его ID в self.id_film.
-            https://www.kinopoisk.ru/index.php?kp_query=мстители
+        """Нахождение ID фильма по названию и году на Кинопоиске.
+
+        Получаем страницу поиска по названию self.name_film и ищем подходящий фильм по self.year.
+        Записываем его ID в self.id_film.
+        Пример строки поиска на Кинопоиске https://www.kinopoisk.ru/index.php?kp_query=мстители
+
+        :return: bool -- удалось ли найти ID фильма
         """
         url = f"https://www.kinopoisk.ru/index.php?kp_query={self.name_film}"
         # get = requests.get(url)  # Request банит
-        """Запросы через Selenium
-        """
+
+        # Запросы через Selenium
         browser = webdriver.Firefox(
             firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
         browser.get(url)
@@ -233,8 +266,6 @@ class KinopoiskParser:
                 break
             if '-' in year:
                 continue
-            """ else:
-                year = int(year)"""
             name = result.find('a').text
             name = name.replace(':', '.')
             if (self.name_film == name.lower()) and (self.year == year):
@@ -245,7 +276,7 @@ class KinopoiskParser:
             return False
 
     def get_from_file(self, url=None):
-        """Получение soup из сохраненной локально страницы фильма, а не запроса.
+        """Получение soup из сохраненной локально страницы фильма, а не из запроса.
 
         :param url: путь с именем к локально сохраненой странице фильма.
         :return: self.result - словарь в данными фильма
@@ -259,8 +290,10 @@ class KinopoiskParser:
         return self.result
 
     def get_from_kinopoisk_with_id(self):
-        """Получение soup из запроса к сайту Кинопоиска по ID фильма. Должен быть уже известен self.id_film.
-        Ищем его через find_film_id() по названию
+        """Получение soup из запроса к сайту Кинопоиска по ID фильма.
+
+        Должен быть уже известен self.id_film.
+        Ищем его через find_film_id() по названию.
 
         :return: self.result - словарь в данными фильма
         """
@@ -270,6 +303,7 @@ class KinopoiskParser:
         time.sleep(10)
         get = self.browser.page_source
         # content = get.content  # .decode(get.encoding)
+        # Проверка на капчу
         '''if 'captcha' in content:
             raise ValueError('Kinopoisk block this IP. Too many requests')'''
         # В случае, если откроется страница KinopoiskHD
@@ -282,18 +316,16 @@ class KinopoiskParser:
         self.result['id_kinopoisk'] = self.id_film
         return self.result
 
-    """Методы для поиска через Selenium
-    """
+    """Методы для поиска через Selenium"""
 
     def open_selenium(self):
-        """Запуск Selenium-браузера(Firefox) и переход на сайт Кинопоиска
-        """
+        """Запуск Selenium-браузера(Firefox) и переход на сайт Кинопоиска."""
         url = 'https://www.kinopoisk.ru/'
         self.browser = webdriver.Firefox()  # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
         self.browser.get(url)
 
     def correcting_names(self, name: str):
-        """Корректировка названий из базы и сайта для однородного вида
+        """Корректировка названий из базы и сайта для однородного вида.
 
         :param name: название фильма с сайта
         :return: name
@@ -301,12 +333,13 @@ class KinopoiskParser:
         self.name_film = str(self.name_film).lower()
         self.year = str(self.year)
         name = name.lower()
-        # В таблице во всех названиях ':' заменено на '.', т.к. названия файлов не позволяют ставить ':'
+        # В xlsx-таблице во всех названиях ':' заменено на '.', т.к. названия файлов в Windows не позволяют ставить ':'
         name = name.replace(':', '.')
-        # в названиях на Кинопоиске иногда попадаются специальные символы многоточия, которые дают False в сравнении имен
+        # В названиях на Кинопоиске иногда попадаются специальные символы многоточия,
+        # которые дают False при сравнении имен. Заменяем их на три точки, как в таблице
         name = name.replace(chr(8230), '...')
         self.name_film = self.name_film.replace(chr(8230), '...')
-        # в названиях на Кинопоиске иногда попадаются символ неразрывного пробела, который дает False в сравнении имен
+        # В названиях на Кинопоиске иногда попадаются символ неразрывного пробела, который дает False при сравнении имен
         name = name.replace(chr(160), chr(32))
         # удаляем лишние пробелы в начале и конце
         self.name_film = self.name_film.strip()
@@ -314,13 +347,15 @@ class KinopoiskParser:
         return name
 
     def find_on_kinopoisk(self, name_film, year_film):
-        """
+        """Поиск фильма на сайте и возрат его данных.
+
         В строку поиска на сайте Кинопоиска в Selenium браузере передается название фильма и производится поиск
-        нужного фильма на первой странице поисковой выдачи.
+        нужного фильма на первой странице поисковой выдачи по совпадению имени и года.
+        После чего передается код страницы в get_info(), которая возращает нужные данные.
 
         :param name_film: название фильма из таблицы Films.xlsx
         :param year_film: год фильма из таблицы Films.xlsx
-        :return:
+        :return: data: словарь с необходимыми данными о фильме
         """
         self.name_film = name_film
         self.year = year_film
@@ -363,6 +398,7 @@ class KinopoiskParser:
 
     def write_data(self):
         """Запись в Films.xlsx данных для последнего фильма.
+
         Замечен спецэффект, когда max_row больше количества фактически заполненных строк.
         В таком случае необходимо в xlsx вручную удалить пустые строки.
 
@@ -370,6 +406,8 @@ class KinopoiskParser:
         """
         wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
         ws = wb.active
+        # Для фильма и сериала разные алгоритмы поска данных.
+        # Фильм ищется по имени и году, а для сериала сразу по ID из таблицы осуществляется переход на страницу сериала
         if ws.cell(row=ws.max_row, column=self._find_column(ws,'Type')).value == 'Фильм':
             self.result = self.find_on_kinopoisk(name_film=ws.cell(row=ws.max_row,
                                                                    column=self._find_column(ws,'Name')).value,
@@ -378,6 +416,9 @@ class KinopoiskParser:
         elif ws.cell(row=ws.max_row, column=self._find_column(ws,'Type')).value == 'Сериал':
             self.id_film = ws.cell(row=ws.max_row, column=self._find_column(ws,'Kinopoisk ID')).value
             self.result = self.get_from_kinopoisk_with_id()
+        # Заполняем таблицу полученными данными
+        # Колонки таблицы могут менять свой порядок, т.к. их поиск осуществляется по имени столбцов
+        # TODO: попробовать заменить на один try, вычленив из ошибки параметр, значения которого нет, если это возможно.
         try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Year')).value = self.result["year"]
         except KeyError:
@@ -389,8 +430,7 @@ class KinopoiskParser:
         try:
             ws.cell(row=ws.max_row, column=self._find_column(ws,'Kinopoisk ID')).value = self.result["id_kinopoisk"]
         except KeyError:
-            pass
-            # print('Нет значения id_kinopoisk')
+            print('Нет значения id_kinopoisk')
         try:
             ws.cell(row=ws.max_row, column=self._find_column(ws,'IMDB')).value = self.result["imdb"]
         except KeyError:
@@ -411,7 +451,7 @@ class KinopoiskParser:
             ws.cell(row=ws.max_row, column=self._find_column(ws,'Director')).value = self.result["director"]
         except KeyError:
             print('Нет значения Director')
-        try:
+        try:  # Актеры - словарь в словаре. Превращаем в единую строку для записи в файл
             actors = ''
             for key, value in self.result['actors'].items():
                 actors += value + ", "
@@ -425,13 +465,19 @@ class KinopoiskParser:
 
     @staticmethod
     def _find_column(sheet, name):
+        """
+        Поиск номера столбца по имени.
+
+        :param sheet: рабочий лист в xlsx
+        :param name: имя столбца для поиска его номера
+        :return: номер столбца
+        """
         for cell in sheet[1]:
             if cell.value == name:
                 return cell.column
 
     def close_selenium(self):
-        """Закрытие Selenium браузера
-        """
+        """Закрытие Selenium браузера"""
         self.browser.close()
 
 
