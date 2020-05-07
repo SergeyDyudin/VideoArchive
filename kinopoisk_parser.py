@@ -211,7 +211,7 @@ class KinopoiskParser:
                 results['director'] = director.strip()
             if info.contents[0].text == 'Жанр':
                 genre = re.split(',', info.contents[1].text)
-                genre = genre[1] if genre[0] == 'ужасы' else genre[0]
+                genre = genre[1] if genre[0] == 'ужасы' else genre[0]  # меняем ужасы на следующий жанр
                 results['genre'] = genre.strip()
             if info.contents[0].text == 'Время':
                 time = info.contents[1].text
