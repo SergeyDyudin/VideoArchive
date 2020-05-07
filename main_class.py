@@ -10,6 +10,7 @@ from threading import Thread  # для рисования progressbar
 
 # TODO: Перенести OCR в отдельный проект
 # TODO: обновить файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
+# TODO: Вынести 'C:\install\Films.xlsx' в отдельную константу.
 
 # Класс для фильмов
 class Film:
@@ -142,40 +143,52 @@ class Film:
         wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
         ws = wb.active
         # TODO: Проверить запись в Films.xlsx с использованием только модуля openpyxl.
-        # В версии с классами функция переработана без использования модуля xlrd для поиска макс.количества строк
-        # rb = xlrd.open_workbook(r'C:\install\Films.xlsx')
-        # sheet = rb.sheet_by_index(0)
 
-        # ws["A" + str(ws.max_row + 1)] = self.clear_name  # Без использования self._find_column_letter()
-        ws[self._find_column_letter(ws, 'Name')] = self.clear_name
-
+        # ws["A" + str(ws.max_row + 1)] = self.clear_name  # Без использования self._letter_plus_row()
+        ws[self._letter_plus_row(ws, 'Name')] = self.clear_name
+        ws[self._letter_plus_row(ws, 'ID')] = str(ws.max_row)
         if self.season:
-            ws[self._find_column_letter(ws, 'Season')] = 'Сезон ' + str(self.season)
-            ws[self._find_column_letter(ws, 'Type')] = 'Сериал'
+            ws[self._letter_plus_row(ws, 'Season')] = 'Сезон ' + str(self.season)
+            ws[self._letter_plus_row(ws, 'Type')] = 'Сериал'
         else:
-            ws[self._find_column_letter(ws, 'Type')] = 'Фильм'
-        if self.genre: ws[self._find_column_letter(ws, 'Genre')] = self.genre
-        if self.year: ws[self._find_column_letter(ws, 'Year')] = self.year
-        if self.id: ws[self._find_column_letter(ws, 'Kinopoisk ID')] = self.id
+            ws[self._letter_plus_row(ws, 'Type')] = 'Фильм'
+        if self.genre: ws[self._letter_plus_row(ws, 'Genre')] = self.genre
+        if self.year: ws[self._letter_plus_row(ws, 'Year')] = self.year
+        if self.id: ws[self._letter_plus_row(ws, 'Kinopoisk ID')] = self.id
         wb.save(r'C:\install\Films.xlsx')
         wb.close()
         return True
+
+    def _letter_plus_row(self, sheet, column):
+        """Получить строку "столбец + последняя строка"
+
+        Возвращает строку столбец плюс номер максимальной строки в таблице, но, если столбец Name,
+        то возвращает номер следующей за максимальной строкой, т.к. в этом случае это новая запись.
+
+        :param sheet: рабочий лист
+        :param column: Название столбца
+        :return: str ~ "D34"
+        """
+        if column != 'Name':
+            return self._find_column_letter(sheet, column) + str(sheet.max_row)
+        else:
+            return self._find_column_letter(sheet, column) + str(sheet.max_row + 1)
 
     @staticmethod
     def _find_column_letter(sheet, column):
         """Находит букву столбца по его имени.
 
+        Поиск производится в первой строке таблицы, т.к. именно там прописаны названия столбцов.
+        Если такого столбца нет, то возвращает букву следующего за максимальным.
+
         :param sheet: лист Excel
         :param column: Название нужного столбца
-        :return: letter + номер строки
+        :return: letter: str
         """
         for cell in sheet[1]:
             if cell.value == column:
-                if column != 'Name':
-                    return cell.column_letter + str(sheet.max_row)
-                else:
-                    return cell.column_letter + str(sheet.max_row + 1)
-        return sheet.cell(sheet.max_row, sheet.max_column + 1).column_letter + str(sheet.max_row)
+                return cell.column_letter
+        return sheet.cell(sheet.max_row, sheet.max_column + 1).column_letter
         # letter = (cell.column_letter for cell in sheet[1] if cell.value == column)
         # if isinstance(next(letter), str):
         #     return letter + str(sheet.max_row)
