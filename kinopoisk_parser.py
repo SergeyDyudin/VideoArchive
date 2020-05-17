@@ -159,8 +159,8 @@ class KinopoiskParser:
                     genre = i.nextSibling.find('a').text
                     results['genre'] = genre.strip()
                 if i.text == 'время':
-                    time = i.nextSibling.text
-                    results['time'] = time.strip()
+                    ftime = i.nextSibling.text
+                    results['time'] = ftime.strip()
             """ Получаем актеров фильма
             """
             items = soup.find('div', {'id': 'actorList'}).find('ul').find_all('a')
@@ -196,7 +196,8 @@ class KinopoiskParser:
         soup = BeautifulSoup(content, features="html.parser")
         results = {}
         actors = {}
-        results['film_name'] = soup.find('div', {'class': 'film-header-group film-basic-info__title'}).next_element.next.text
+        results['film_name'] = soup.find('div',
+                                         {'class': 'film-header-group film-basic-info__title'}).next_element.next.text
         all_movie_info = soup.find('div', {'class': 'film-info-table'})  # film-info-table_color_scheme_grey'})
         for info in all_movie_info.contents:
             # Получаем основные данные о фильме
@@ -214,8 +215,8 @@ class KinopoiskParser:
                 genre = genre[1] if genre[0] == 'ужасы' else genre[0]  # меняем ужасы на следующий жанр
                 results['genre'] = genre.strip()
             if info.contents[0].text == 'Время':
-                time = info.contents[1].text
-                results['time'] = time.strip()
+                ftime = info.contents[1].text
+                results['time'] = ftime.strip()
         # Получаем актеров фильма
         items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents[0].contents
         for i, item in enumerate(items):
@@ -321,7 +322,9 @@ class KinopoiskParser:
     def open_selenium(self):
         """Запуск Selenium-браузера(Firefox) и переход на сайт Кинопоиска."""
         url = 'https://www.kinopoisk.ru/'
-        self.browser = webdriver.Firefox()  # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
+        # Если нужен профиль в Firefox, то добавить следующий параметр в webdriver.Firefox() (поменять на свой профиль)
+        # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
+        self.browser = webdriver.Firefox()
         self.browser.get(url)
 
     def correcting_names(self, name: str):
@@ -408,13 +411,13 @@ class KinopoiskParser:
         ws = wb.active
         # Для фильма и сериала разные алгоритмы поска данных.
         # Фильм ищется по имени и году, а для сериала сразу по ID из таблицы осуществляется переход на страницу сериала
-        if ws.cell(row=ws.max_row, column=self._find_column(ws,'Type')).value == 'Фильм':
+        if ws.cell(row=ws.max_row, column=self._find_column(ws, 'Type')).value == 'Фильм':
             self.result = self.find_on_kinopoisk(name_film=ws.cell(row=ws.max_row,
-                                                                   column=self._find_column(ws,'Name')).value,
+                                                                   column=self._find_column(ws, 'Name')).value,
                                                  year_film=ws.cell(row=ws.max_row,
-                                                                   column=self._find_column(ws,'Year')).value)
-        elif ws.cell(row=ws.max_row, column=self._find_column(ws,'Type')).value == 'Сериал':
-            self.id_film = ws.cell(row=ws.max_row, column=self._find_column(ws,'Kinopoisk ID')).value
+                                                                   column=self._find_column(ws, 'Year')).value)
+        elif ws.cell(row=ws.max_row, column=self._find_column(ws, 'Type')).value == 'Сериал':
+            self.id_film = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk ID')).value
             self.result = self.get_from_kinopoisk_with_id()
         # Заполняем таблицу полученными данными
         # Колонки таблицы могут менять свой порядок, т.к. их поиск осуществляется по имени столбцов
@@ -424,38 +427,38 @@ class KinopoiskParser:
         except KeyError:
             print('Нет значения год')
         try:
-            ws.cell(row=ws.max_row, column=self._find_column(ws,'Genre')).value = self.result["genre"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Genre')).value = self.result["genre"]
         except KeyError:
             print('Нет значения жанр')
         try:
-            ws.cell(row=ws.max_row, column=self._find_column(ws,'Kinopoisk ID')).value = self.result["id_kinopoisk"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk ID')).value = self.result["id_kinopoisk"]
         except KeyError:
             print('Нет значения id_kinopoisk')
         try:
-            ws.cell(row=ws.max_row, column=self._find_column(ws,'IMDB')).value = self.result["imdb"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'IMDB')).value = self.result["imdb"]
         except KeyError:
             print('Нет значения IMDB')
         try:
-            ws.cell(row=ws.max_row, column=self._find_column(ws,'Kinopoisk')).value = self.result["kinopoisk"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk')).value = self.result["kinopoisk"]
         except KeyError:
             print('Нет значения Kinopoisk')
         try:
-            ws.cell(row=ws.max_row, column=self._find_column(ws,'Country')).value = self.result["country"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Country')).value = self.result["country"]
         except KeyError:
             print('Нет значения country')
         try:
-            ws.cell(row=ws.max_row, column=self._find_column(ws,'Time')).value = self.result["time"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Time')).value = self.result["time"]
         except KeyError:
             print('Нет значения Time')
         try:
-            ws.cell(row=ws.max_row, column=self._find_column(ws,'Director')).value = self.result["director"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Director')).value = self.result["director"]
         except KeyError:
             print('Нет значения Director')
         try:  # Актеры - словарь в словаре. Превращаем в единую строку для записи в файл
             actors = ''
             for key, value in self.result['actors'].items():
                 actors += value + ", "
-            ws.cell(row=ws.max_row, column=self._find_column(ws,'Actors')).value = actors[:-2]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Actors')).value = actors[:-2]
         except KeyError:
             print('Нет значения Actors')
         self.name_film = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Name')).value
