@@ -8,14 +8,16 @@ import sys
 import time
 from threading import Thread  # для рисования progressbar
 
-# TODO: Перенести OCR в отдельный проект
+
 # TODO: обновить файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
-# TODO: Вынести 'C:\install\Films.xlsx' в отдельную константу.
+
 
 # Класс для фильмов
 class Film:
     """Класс занимается переименованием, копированием фильмов, записью в xlsx данных.
     """
+    data_file = r'C:\install\Films.xlsx'  # файл для хранения данных о фильмах и сериалах
+
     def __init__(self, name: str, path: str, serv: str, chief: str):
         """
         :param name: полное имя файла вида жанр_год_название.ext
@@ -140,7 +142,7 @@ class Film:
 
         :return True: в случае успешной записи
         """
-        wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
+        wb = openpyxl.load_workbook(filename=Film.data_file)
         ws = wb.active
         # TODO: Проверить запись в Films.xlsx с использованием только модуля openpyxl.
 
@@ -155,7 +157,7 @@ class Film:
         if self.genre: ws[self._letter_plus_row(ws, 'Genre')] = self.genre
         if self.year: ws[self._letter_plus_row(ws, 'Year')] = self.year
         if self.id: ws[self._letter_plus_row(ws, 'Kinopoisk ID')] = self.id
-        wb.save(r'C:\install\Films.xlsx')
+        wb.save(Film.data_file)
         wb.close()
         return True
 

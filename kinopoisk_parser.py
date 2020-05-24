@@ -14,6 +14,8 @@ import openpyxl
 import re
 import os
 
+data_file = r'C:\install\Films.xlsx'  # xlsx-файл для хранения базы данных
+
 
 class ProxyManager:
     """
@@ -170,7 +172,7 @@ class KinopoiskParser:
         try:
             actors.popitem()  # Удаляем актера "...". Во всех фильмах многоточие в конце списка
         except KeyError:
-            print('Список актеров пуст!')
+            print(results['film_name'], ': Список актеров пуст!')
         results['actors'] = actors
 
         # Получаем оценки фильма
@@ -224,7 +226,7 @@ class KinopoiskParser:
         try:
             actors.popitem()  # Удаляем актера "...". Во всех фильмах многоточие в конце списка
         except KeyError:
-            print('Список актеров пуст!')
+            print(results['film_name'], ': Список актеров пуст!')
         results['actors'] = actors
 
         # Получаем оценки фильма
@@ -263,7 +265,7 @@ class KinopoiskParser:
         for result in results:
             try:
                 year = result.find('span', {'class': 'year'}).text
-            except:
+            except Exception:
                 break
             if '-' in year:
                 continue
@@ -374,7 +376,7 @@ class KinopoiskParser:
         for result in results:
             try:
                 year = result.find_element_by_class_name('year').text
-            except:
+            except Exception:
                 year = ''
                 continue
             if '-' in year:  # '-' в сериалах
@@ -407,7 +409,7 @@ class KinopoiskParser:
 
         :return:
         """
-        wb = openpyxl.load_workbook(filename='C:/install/Films.xlsx')
+        wb = openpyxl.load_workbook(filename=data_file)
         ws = wb.active
         # Для фильма и сериала разные алгоритмы поска данных.
         # Фильм ищется по имени и году, а для сериала сразу по ID из таблицы осуществляется переход на страницу сериала
@@ -420,49 +422,25 @@ class KinopoiskParser:
             self.id_film = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk ID')).value
             self.result = self.get_from_kinopoisk_with_id()
         # Заполняем таблицу полученными данными
-        # Колонки таблицы могут менять свой порядок, т.к. их поиск осуществляется по имени столбцов
-        # TODO: попробовать заменить на один try, вычленив из ошибки параметр, значения которого нет, если это возможно.
+        # Колонки таблицы могут менять свой порядок, поэтому их поиск осуществляется по имени столбцов
         try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Year')).value = self.result["year"]
-        except KeyError:
-            print('Нет значения год')
-        try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Genre')).value = self.result["genre"]
-        except KeyError:
-            print('Нет значения жанр')
-        try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk ID')).value = self.result["id_kinopoisk"]
-        except KeyError:
-            print('Нет значения id_kinopoisk')
-        try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'IMDB')).value = self.result["imdb"]
-        except KeyError:
-            print('Нет значения IMDB')
-        try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk')).value = self.result["kinopoisk"]
-        except KeyError:
-            print('Нет значения Kinopoisk')
-        try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Country')).value = self.result["country"]
-        except KeyError:
-            print('Нет значения country')
-        try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Time')).value = self.result["time"]
-        except KeyError:
-            print('Нет значения Time')
-        try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Director')).value = self.result["director"]
-        except KeyError:
-            print('Нет значения Director')
-        try:  # Актеры - словарь в словаре. Превращаем в единую строку для записи в файл
+            # Актеры - словарь в словаре. Превращаем в единую строку для записи в файл
             actors = ''
             for key, value in self.result['actors'].items():
                 actors += value + ", "
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Actors')).value = actors[:-2]
-        except KeyError:
-            print('Нет значения Actors')
+        except KeyError as e:
+            print('Нет значения: ', e)
         self.name_film = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Name')).value
-        wb.save(r'C:\install\Films.xlsx')
+        wb.save(data_file)
         wb.close()
         print(f'Получены и записаны данные с Кинопоиска для {self.name_film}')
 
