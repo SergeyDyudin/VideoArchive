@@ -455,7 +455,7 @@ class KinopoiskParser:
         """
         for cell in sheet[1]:
             if cell.value == name:
-                return cell.column
+                return cell.col_idx
 
     def close_selenium(self):
         """Закрытие Selenium браузера"""

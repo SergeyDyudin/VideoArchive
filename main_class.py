@@ -189,8 +189,8 @@ class Film:
         """
         for cell in sheet[1]:
             if cell.value == column:
-                return cell.column_letter
-        return sheet.cell(sheet.max_row, sheet.max_column + 1).column_letter
+                return cell.column  #column_letter
+        return sheet.cell(sheet.max_row, sheet.max_column + 1).column  #column_letter
         # letter = (cell.column_letter for cell in sheet[1] if cell.value == column)
         # if isinstance(next(letter), str):
         #     return letter + str(sheet.max_row)
