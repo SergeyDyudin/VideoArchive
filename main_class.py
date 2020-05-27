@@ -311,7 +311,7 @@ class Serial(Film):
         for self.fullname in self.files:
             self.ext = os.path.splitext(self.fullname)[1]
             if self.find_season():  # Если есть подстрока с сезоном, то лучше переделать путь назначения
-                destination = f"{self.serv_disk}/{self.clear_name}/Сезон {self.season}"
+                destination = f"{self.chief_disk}/{self.clear_name}/Сезон {self.season}"
             self.name = "Episode " + str(self.episode_number) + self.ext
             if self.copy_film(destination):
                 self.episode_number += 1
