@@ -2,6 +2,7 @@ import os
 import shutil
 import psutil
 import openpyxl
+from openpyxl.styles import Font
 import re
 from kinopoisk_parser import KinopoiskParser
 import sys
@@ -144,19 +145,33 @@ class Film:
         """
         wb = openpyxl.load_workbook(filename=Film.data_file)
         ws = wb.active
-        # TODO: Проверить запись в Films.xlsx с использованием только модуля openpyxl.
+        font = Font(name='Times New Roman',
+                    size=12,
+                    bold=False,
+                    italic=False,
+                    vertAlign=None,
+                    underline='none',
+                    strike=False,
+                    color='FF000000')
 
         # ws["A" + str(ws.max_row + 1)] = self.clear_name  # Без использования self._letter_plus_row()
-        ws[self._letter_plus_row(ws, 'Name')] = self.clear_name
+        cell_name = self._letter_plus_row(ws, 'Name')
+        ws[cell_name] = self.clear_name
+        ws[cell_name].font = font
         ws[self._letter_plus_row(ws, 'ID')] = str(ws.max_row)
+        ws[self._letter_plus_row(ws, 'ID')].font = font
         if self.season:
             ws[self._letter_plus_row(ws, 'Season')] = 'Сезон ' + str(self.season)
+            ws[self._letter_plus_row(ws, 'Season')].font = font
             ws[self._letter_plus_row(ws, 'Type')] = 'Сериал'
         else:
             ws[self._letter_plus_row(ws, 'Type')] = 'Фильм'
+        ws[self._letter_plus_row(ws, 'Type')].font = font
         if self.genre: ws[self._letter_plus_row(ws, 'Genre')] = self.genre
         if self.year: ws[self._letter_plus_row(ws, 'Year')] = self.year
-        if self.id: ws[self._letter_plus_row(ws, 'Kinopoisk ID')] = self.id
+        if self.id:
+            ws[self._letter_plus_row(ws, 'Kinopoisk ID')] = self.id
+            ws[self._letter_plus_row(ws, 'Kinopoisk ID')].font = font
         wb.save(Film.data_file)
         wb.close()
         return True

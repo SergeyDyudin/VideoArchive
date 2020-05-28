@@ -11,6 +11,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
 import time
 import openpyxl
+from openpyxl.styles import Font
 import re
 import os
 
@@ -317,6 +318,21 @@ class KinopoiskParser:
         # в названиях на Кинопоиске попадаются символ неразрывного пробела, который дает False в сравнении имен
         self.result['film_name'] = self.result['film_name'].replace(chr(160), chr(32))
         self.result['id_kinopoisk'] = self.id_film
+        # получаем даты сезонов у сериала
+        try:
+            element = self.browser.find_element_by_class_name('table-col-years__seasons')
+            self.browser.execute_script("arguments[0].click();", element)
+            time.sleep(5)
+            get = self.browser.page_source
+            soup = BeautifulSoup(get, features="html.parser")
+            years = []
+            items = soup.find('div', {'class', 'shadow'}).find_all('a', {'class', 'all'})
+            for i in items:
+                if '#y' in i['href']:
+                    years += i.contents
+            self.result["year"] = years
+        except Exception:
+            print('Даты сезонов не получилось достать.')
         return self.result
 
     """Методы для поиска через Selenium"""
@@ -411,6 +427,14 @@ class KinopoiskParser:
         """
         wb = openpyxl.load_workbook(filename=data_file)
         ws = wb.active
+        font = Font(name='Times New Roman',
+                    size=12,
+                    bold=False,
+                    italic=False,
+                    vertAlign=None,
+                    underline='none',
+                    strike=False,
+                    color='FF000000')
         # Для фильма и сериала разные алгоритмы поска данных.
         # Фильм ищется по имени и году, а для сериала сразу по ID из таблицы осуществляется переход на страницу сериала
         if ws.cell(row=ws.max_row, column=self._find_column(ws, 'Type')).value == 'Фильм':
@@ -421,22 +445,34 @@ class KinopoiskParser:
         elif ws.cell(row=ws.max_row, column=self._find_column(ws, 'Type')).value == 'Сериал':
             self.id_film = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk ID')).value
             self.result = self.get_from_kinopoisk_with_id()
+            season = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Season')).value
+            season = int(re.split(' ', season)[1])
+            self.result["year"] = self.result["year"][season - 1]
         # Заполняем таблицу полученными данными
         # Колонки таблицы могут менять свой порядок, поэтому их поиск осуществляется по имени столбцов
         try:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Year')).value = self.result["year"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Year')).font = font
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Genre')).value = self.result["genre"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Genre')).font = font
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk ID')).value = self.result["id_kinopoisk"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk ID')).font = font
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'IMDB')).value = self.result["imdb"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'IMDB')).font = font
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk')).value = self.result["kinopoisk"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Kinopoisk')).font = font
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Country')).value = self.result["country"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Country')).font = font
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Time')).value = self.result["time"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Time')).font = font
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Director')).value = self.result["director"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Director')).font = font
             # Актеры - словарь в словаре. Превращаем в единую строку для записи в файл
             actors = ''
             for key, value in self.result['actors'].items():
                 actors += value + ", "
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Actors')).value = actors[:-2]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Actors')).font = font
         except KeyError as e:
             print('Нет значения: ', e)
         self.name_film = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Name')).value
