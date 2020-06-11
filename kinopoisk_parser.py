@@ -224,7 +224,8 @@ class KinopoiskParser:
                 ftime = info.contents[1].text
                 results['time'] = ftime.strip()
         # Получаем актеров фильма
-        items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents[0].contents
+        # items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents[0].contents
+        items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents
         for i, item in enumerate(items):
             actors[i] = item.text
         try:
@@ -323,9 +324,10 @@ class KinopoiskParser:
         self.result['id_kinopoisk'] = self.id_film
         # получаем даты сезонов у сериала
         try:
-            element = self.browser.find_element_by_class_name('table-col-years__seasons')
+            # element = self.browser.find_element_by_class_name('table-col-years__seasons')
+            element = self.browser.find_elements_by_class_name('mC3xgnbJn9r8KpG71O4nw')[1]
             self.browser.execute_script("arguments[0].click();", element)
-            time.sleep(5)
+            time.sleep(10)
             get = self.browser.page_source
             soup = BeautifulSoup(get, features="html.parser")
             years = []
