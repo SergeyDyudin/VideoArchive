@@ -199,9 +199,12 @@ class KinopoiskParser:
         soup = BeautifulSoup(content, features="html.parser")
         results = {}
         actors = {}
+        # results['film_name'] = soup.find('div',
+        #                                  {'class': 'film-header-group film-basic-info__title'}).next_element.next.text
         results['film_name'] = soup.find('div',
-                                         {'class': 'film-header-group film-basic-info__title'}).next_element.next.text
-        all_movie_info = soup.find('div', {'class': 'film-info-table'})  # film-info-table_color_scheme_grey'})
+                                         {'class': 'film-basic-info__title'}).next_element.next.text
+        # all_movie_info = soup.find('div', {'class': 'film-info-table'})  # film-info-table_color_scheme_grey'})
+        all_movie_info = soup.find('div', {'data-tid': 'bdb69791'})
         for info in all_movie_info.contents:
             # Получаем основные данные о фильме
             if info.contents[0].text == 'Год производства':
