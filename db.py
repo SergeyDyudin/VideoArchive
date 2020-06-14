@@ -80,8 +80,8 @@ class DataBase:
         :param request: запрос
         :return:
         """
-        data = self.get_data(3)
-        request = 'INSERT INTO {table} ({field}) VALUES (%s);'
+        data = self.get_data(8)
+        request = 'INSERT INTO {table} ({field}) VALUES (%s) ON CONFLICT ({field}) DO UPDATE SET {field}=Excluded.{field} Returning id;'
         try:
             # self.cur.execute('INSERT INTO years (year) VALUES (%(year)s);', data)
             self.cur.execute(sql.SQL(request).format(table=sql.Identifier('years'),
@@ -91,6 +91,7 @@ class DataBase:
             self.conn.rollback()
         else:
             print('Запрос выполнен. Делается коммит.')
+            print(f'ID = {self.cur.fetchone()[0]}')
             self.conn.commit()
         # print(self.cur.fetchall())
 
