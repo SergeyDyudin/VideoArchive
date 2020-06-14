@@ -74,20 +74,25 @@ class DataBase:
             wb.close()
         return result
 
-    def query(self, request):
+    def query(self, request=None):
         """Выполнение и коммит запроса.
 
         :param request: запрос
         :return:
         """
-        data = self.get_data()
+        data = self.get_data(3)
+        request = 'INSERT INTO {table} ({field}) VALUES (%s);'
         try:
-            self.cur.executemany(request)
+            # self.cur.execute('INSERT INTO years (year) VALUES (%(year)s);', data)
+            self.cur.execute(sql.SQL(request).format(table=sql.Identifier('years'),
+                                                     field=sql.Identifier('year')), (data['year'],))
         except Exception as err:
             print('Error! ', err)
             self.conn.rollback()
         else:
+            print('Запрос выполнен. Делается коммит.')
             self.conn.commit()
+        # print(self.cur.fetchall())
 
     def close(self):
         self.cur.close()
@@ -98,4 +103,5 @@ if __name__ == '__main__':
     # connect_file = r'C:\install\dbauth.txt'
     connect_file = 'dbauth.txt'
     with DataBase(connect_file) as base:
-        print(base.get_data(13))
+        # print(base.get_data(13))
+        base.query()
