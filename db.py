@@ -95,6 +95,7 @@ class DataBase:
 
 
 if __name__ == '__main__':
-    connect_file = r'C:\install\dbauth.txt'
+    # connect_file = r'C:\install\dbauth.txt'
+    connect_file = 'dbauth.txt'
     with DataBase(connect_file) as base:
         print(base.get_data(13))
