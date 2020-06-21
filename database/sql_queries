@@ -1,0 +1,32 @@
+CREATE OR REPLACE FUNCTION ins_film(f_name text, f_genre text, f_year text, f_type film_type, f_season text,
+f_kinipoisk text, f_imdb text, f_kinopoisk_id text, f_time text)
+RETURNS int
+AS $$
+DECLARE
+	year_id int;
+	genre_id int;
+	type_id int;
+BEGIN
+    -- записываем year в таблицу years и получаем id
+	SELECT years.id INTO year_id FROM years WHERE years.year=f_year;
+	IF NOT FOUND THEN
+		WITH ins_id AS (
+			INSERT INTO years(year) VALUES (f_year) RETURNING years.id)
+		SELECT * INTO year_id FROM ins_id;
+	END IF;
+	RAISE NOTICE 'Данные для year записаны. id = %', year_id;
+	-- записываем genre в таблицу genres и получаем id
+	SELECT genres.id INTO genre_id FROM genres WHERE genres.genre=f_genre;
+	IF NOT FOUND THEN
+		WITH ins_id AS (
+			INSERT INTO genres(genre) VALUES (f_genre) RETURNING genres.id)
+		SELECT * INTO genre_id FROM ins_id;
+	END IF;
+	RAISE NOTICE 'Данные для genre записаны. id = %', genre_id;
+    RETURN genre_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- запрос для таблицы type
+select * from "types" where ("type"='сериал' and "season" is null) or ("type"='сериал' and "season"='season 1');
