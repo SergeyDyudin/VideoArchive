@@ -1,0 +1,726 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 12.2 (Ubuntu 12.2-4)
+-- Dumped by pg_dump version 12.2 (Ubuntu 12.2-4)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: film_type; Type: TYPE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TYPE public.film_type AS ENUM (
+    'фильм',
+    'сериал'
+);
+
+
+ALTER TYPE public.film_type OWNER TO "zs-content-02-usr";
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: actors; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.actors (
+    id integer NOT NULL,
+    actor character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.actors OWNER TO "zs-content-02-usr";
+
+--
+-- Name: actors_id_seq; Type: SEQUENCE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE SEQUENCE public.actors_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.actors_id_seq OWNER TO "zs-content-02-usr";
+
+--
+-- Name: actors_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER SEQUENCE public.actors_id_seq OWNED BY public.actors.id;
+
+
+--
+-- Name: countries; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.countries (
+    id integer NOT NULL,
+    country character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.countries OWNER TO "zs-content-02-usr";
+
+--
+-- Name: countries_id_seq; Type: SEQUENCE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE SEQUENCE public.countries_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.countries_id_seq OWNER TO "zs-content-02-usr";
+
+--
+-- Name: countries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER SEQUENCE public.countries_id_seq OWNED BY public.countries.id;
+
+
+--
+-- Name: directors; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.directors (
+    id integer NOT NULL,
+    director character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.directors OWNER TO "zs-content-02-usr";
+
+--
+-- Name: directors_id_seq; Type: SEQUENCE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE SEQUENCE public.directors_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.directors_id_seq OWNER TO "zs-content-02-usr";
+
+--
+-- Name: directors_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER SEQUENCE public.directors_id_seq OWNED BY public.directors.id;
+
+
+--
+-- Name: films; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.films (
+    id integer NOT NULL,
+    name character varying(80) NOT NULL,
+    "time" character varying(20),
+    kinopoisk_id character varying(30),
+    kinopoisk double precision,
+    imdb double precision,
+    id_years integer,
+    id_genres integer,
+    id_types integer
+);
+
+
+ALTER TABLE public.films OWNER TO "zs-content-02-usr";
+
+--
+-- Name: films_actors; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.films_actors (
+    film_id integer NOT NULL,
+    actor_id integer NOT NULL
+);
+
+
+ALTER TABLE public.films_actors OWNER TO "zs-content-02-usr";
+
+--
+-- Name: films_countries; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.films_countries (
+    film_id integer NOT NULL,
+    country_id integer NOT NULL
+);
+
+
+ALTER TABLE public.films_countries OWNER TO "zs-content-02-usr";
+
+--
+-- Name: films_directors; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.films_directors (
+    film_id integer NOT NULL,
+    director_id integer NOT NULL
+);
+
+
+ALTER TABLE public.films_directors OWNER TO "zs-content-02-usr";
+
+--
+-- Name: films_id_seq; Type: SEQUENCE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE SEQUENCE public.films_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.films_id_seq OWNER TO "zs-content-02-usr";
+
+--
+-- Name: films_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER SEQUENCE public.films_id_seq OWNED BY public.films.id;
+
+
+--
+-- Name: genres; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.genres (
+    id integer NOT NULL,
+    genre character varying(20) NOT NULL
+);
+
+
+ALTER TABLE public.genres OWNER TO "zs-content-02-usr";
+
+--
+-- Name: genres_id_seq; Type: SEQUENCE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE SEQUENCE public.genres_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.genres_id_seq OWNER TO "zs-content-02-usr";
+
+--
+-- Name: genres_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER SEQUENCE public.genres_id_seq OWNED BY public.genres.id;
+
+
+--
+-- Name: types; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.types (
+    id integer NOT NULL,
+    type public.film_type NOT NULL,
+    season character varying(30)
+);
+
+
+ALTER TABLE public.types OWNER TO "zs-content-02-usr";
+
+--
+-- Name: types_id_seq; Type: SEQUENCE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE SEQUENCE public.types_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.types_id_seq OWNER TO "zs-content-02-usr";
+
+--
+-- Name: types_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER SEQUENCE public.types_id_seq OWNED BY public.types.id;
+
+
+--
+-- Name: years; Type: TABLE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE TABLE public.years (
+    id integer NOT NULL,
+    year character varying(10) NOT NULL
+);
+
+
+ALTER TABLE public.years OWNER TO "zs-content-02-usr";
+
+--
+-- Name: years_id_seq; Type: SEQUENCE; Schema: public; Owner: zs-content-02-usr
+--
+
+CREATE SEQUENCE public.years_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.years_id_seq OWNER TO "zs-content-02-usr";
+
+--
+-- Name: years_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER SEQUENCE public.years_id_seq OWNED BY public.years.id;
+
+
+--
+-- Name: actors id; Type: DEFAULT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.actors ALTER COLUMN id SET DEFAULT nextval('public.actors_id_seq'::regclass);
+
+
+--
+-- Name: countries id; Type: DEFAULT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.countries ALTER COLUMN id SET DEFAULT nextval('public.countries_id_seq'::regclass);
+
+
+--
+-- Name: directors id; Type: DEFAULT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.directors ALTER COLUMN id SET DEFAULT nextval('public.directors_id_seq'::regclass);
+
+
+--
+-- Name: films id; Type: DEFAULT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films ALTER COLUMN id SET DEFAULT nextval('public.films_id_seq'::regclass);
+
+
+--
+-- Name: genres id; Type: DEFAULT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.genres ALTER COLUMN id SET DEFAULT nextval('public.genres_id_seq'::regclass);
+
+
+--
+-- Name: types id; Type: DEFAULT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.types ALTER COLUMN id SET DEFAULT nextval('public.types_id_seq'::regclass);
+
+
+--
+-- Name: years id; Type: DEFAULT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.years ALTER COLUMN id SET DEFAULT nextval('public.years_id_seq'::regclass);
+
+
+--
+-- Data for Name: actors; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.actors (id, actor) FROM stdin;
+\.
+
+
+--
+-- Data for Name: countries; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.countries (id, country) FROM stdin;
+\.
+
+
+--
+-- Data for Name: directors; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.directors (id, director) FROM stdin;
+\.
+
+
+--
+-- Data for Name: films; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.films (id, name, "time", kinopoisk_id, kinopoisk, imdb, id_years, id_genres, id_types) FROM stdin;
+\.
+
+
+--
+-- Data for Name: films_actors; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.films_actors (film_id, actor_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: films_countries; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.films_countries (film_id, country_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: films_directors; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.films_directors (film_id, director_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: genres; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.genres (id, genre) FROM stdin;
+1	боевик
+2	триллер
+3	комедия
+4	фантастика
+5	мультфильм
+6	драма
+\.
+
+
+--
+-- Data for Name: types; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.types (id, type, season) FROM stdin;
+1	фильм	\N
+2	сериал	\N
+4	сериал	сезон 1
+5	сериал	сезон 2
+6	сериал	сезон 3
+7	сериал	сезон 4
+9	сериал	сезон 5
+10	сериал	сезон 6
+11	сериал	сезон 7
+12	сериал	сезон 8
+13	сериал	сезон 9
+14	сериал	сезон 10
+15	сериал	сезон 11
+16	сериал	сезон 12
+17	сериал	сезон 13
+18	сериал	сезон 14
+19	сериал	сезон 15
+20	сериал	сезон 16
+21	сериал	сезон 17
+22	сериал	сезон 18
+23	сериал	сезон 19
+24	сериал	сезон 20
+\.
+
+
+--
+-- Data for Name: years; Type: TABLE DATA; Schema: public; Owner: zs-content-02-usr
+--
+
+COPY public.years (id, year) FROM stdin;
+\.
+
+
+--
+-- Name: actors_id_seq; Type: SEQUENCE SET; Schema: public; Owner: zs-content-02-usr
+--
+
+SELECT pg_catalog.setval('public.actors_id_seq', 1, false);
+
+
+--
+-- Name: countries_id_seq; Type: SEQUENCE SET; Schema: public; Owner: zs-content-02-usr
+--
+
+SELECT pg_catalog.setval('public.countries_id_seq', 1, false);
+
+
+--
+-- Name: directors_id_seq; Type: SEQUENCE SET; Schema: public; Owner: zs-content-02-usr
+--
+
+SELECT pg_catalog.setval('public.directors_id_seq', 1, false);
+
+
+--
+-- Name: films_id_seq; Type: SEQUENCE SET; Schema: public; Owner: zs-content-02-usr
+--
+
+SELECT pg_catalog.setval('public.films_id_seq', 1, false);
+
+
+--
+-- Name: genres_id_seq; Type: SEQUENCE SET; Schema: public; Owner: zs-content-02-usr
+--
+
+SELECT pg_catalog.setval('public.genres_id_seq', 6, true);
+
+
+--
+-- Name: types_id_seq; Type: SEQUENCE SET; Schema: public; Owner: zs-content-02-usr
+--
+
+SELECT pg_catalog.setval('public.types_id_seq', 24, true);
+
+
+--
+-- Name: years_id_seq; Type: SEQUENCE SET; Schema: public; Owner: zs-content-02-usr
+--
+
+SELECT pg_catalog.setval('public.years_id_seq', 1, false);
+
+
+--
+-- Name: actors actors_actor_key; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.actors
+    ADD CONSTRAINT actors_actor_key UNIQUE (actor);
+
+
+--
+-- Name: actors actors_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.actors
+    ADD CONSTRAINT actors_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: countries countries_country_key; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_country_key UNIQUE (country);
+
+
+--
+-- Name: countries countries_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: directors directors_director_key; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.directors
+    ADD CONSTRAINT directors_director_key UNIQUE (director);
+
+
+--
+-- Name: directors directors_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.directors
+    ADD CONSTRAINT directors_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: films_actors films_actors_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_actors
+    ADD CONSTRAINT films_actors_pkey PRIMARY KEY (film_id, actor_id);
+
+
+--
+-- Name: films_countries films_countries_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_countries
+    ADD CONSTRAINT films_countries_pkey PRIMARY KEY (film_id, country_id);
+
+
+--
+-- Name: films_directors films_directors_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_directors
+    ADD CONSTRAINT films_directors_pkey PRIMARY KEY (film_id, director_id);
+
+
+--
+-- Name: films films_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films
+    ADD CONSTRAINT films_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: genres genres_genre_key; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.genres
+    ADD CONSTRAINT genres_genre_key UNIQUE (genre);
+
+
+--
+-- Name: genres genres_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.genres
+    ADD CONSTRAINT genres_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: types types_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.types
+    ADD CONSTRAINT types_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: types types_season_key; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.types
+    ADD CONSTRAINT types_season_key UNIQUE (season);
+
+
+--
+-- Name: years years_pkey; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.years
+    ADD CONSTRAINT years_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: years years_year_key; Type: CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.years
+    ADD CONSTRAINT years_year_key UNIQUE (year);
+
+
+--
+-- Name: films_actors films_actors_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_actors
+    ADD CONSTRAINT films_actors_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.actors(id);
+
+
+--
+-- Name: films_actors films_actors_film_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_actors
+    ADD CONSTRAINT films_actors_film_id_fkey FOREIGN KEY (film_id) REFERENCES public.films(id);
+
+
+--
+-- Name: films_countries films_countries_country_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_countries
+    ADD CONSTRAINT films_countries_country_id_fkey FOREIGN KEY (country_id) REFERENCES public.countries(id);
+
+
+--
+-- Name: films_countries films_countries_film_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_countries
+    ADD CONSTRAINT films_countries_film_id_fkey FOREIGN KEY (film_id) REFERENCES public.films(id);
+
+
+--
+-- Name: films_directors films_directors_director_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_directors
+    ADD CONSTRAINT films_directors_director_id_fkey FOREIGN KEY (director_id) REFERENCES public.directors(id);
+
+
+--
+-- Name: films_directors films_directors_film_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films_directors
+    ADD CONSTRAINT films_directors_film_id_fkey FOREIGN KEY (film_id) REFERENCES public.films(id);
+
+
+--
+-- Name: films films_id_genres_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films
+    ADD CONSTRAINT films_id_genres_fkey FOREIGN KEY (id_genres) REFERENCES public.genres(id);
+
+
+--
+-- Name: films films_id_types_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films
+    ADD CONSTRAINT films_id_types_fkey FOREIGN KEY (id_types) REFERENCES public.types(id);
+
+
+--
+-- Name: films films_id_years_fkey; Type: FK CONSTRAINT; Schema: public; Owner: zs-content-02-usr
+--
+
+ALTER TABLE ONLY public.films
+    ADD CONSTRAINT films_id_years_fkey FOREIGN KEY (id_years) REFERENCES public.years(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
