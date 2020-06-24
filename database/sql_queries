@@ -1,29 +1,54 @@
 CREATE OR REPLACE FUNCTION ins_film(f_name text, f_genre text, f_year text, f_type film_type, f_season text,
-f_kinipoisk text, f_imdb text, f_kinopoisk_id text, f_time text)
+f_kinopoisk float, f_imdb float, f_kinopoisk_id text, f_time text)
 RETURNS int
 AS $$
 DECLARE
 	year_id int;
 	genre_id int;
 	type_id int;
+	film_id int;
 BEGIN
     -- записываем year в таблицу years и получаем id
-	SELECT years.id INTO year_id FROM years WHERE years.year=f_year;
-	IF NOT FOUND THEN
-		WITH ins_id AS (
-			INSERT INTO years(year) VALUES (f_year) RETURNING years.id)
-		SELECT * INTO year_id FROM ins_id;
-	END IF;
-	RAISE NOTICE 'Данные для year записаны. id = %', year_id;
-	-- записываем genre в таблицу genres и получаем id
-	SELECT genres.id INTO genre_id FROM genres WHERE genres.genre=f_genre;
-	IF NOT FOUND THEN
-		WITH ins_id AS (
-			INSERT INTO genres(genre) VALUES (f_genre) RETURNING genres.id)
-		SELECT * INTO genre_id FROM ins_id;
-	END IF;
-	RAISE NOTICE 'Данные для genre записаны. id = %', genre_id;
-    RETURN genre_id;
+ SELECT years.id INTO year_id FROM years WHERE years.year=f_year;
+ IF NOT FOUND THEN
+  WITH ins_id AS (
+   INSERT INTO years(year) VALUES (f_year) RETURNING years.id)
+  SELECT * INTO year_id FROM ins_id;
+ END IF;
+ RAISE NOTICE 'Данные для year записаны. id = %', year_id;
+ -- записываем genre в таблицу genres и получаем id
+ SELECT genres.id INTO genre_id FROM genres WHERE genres.genre=f_genre;
+ IF NOT FOUND THEN
+  WITH ins_id AS (
+   INSERT INTO genres(genre) VALUES (f_genre) RETURNING genres.id)
+  SELECT * INTO genre_id FROM ins_id;
+ END IF;
+ RAISE NOTICE 'Данные для genre записаны. id = %', genre_id;
+ -- записываем type и season в таблицу types и получаем id
+ IF f_type='фильм' THEN
+  SELECT types.id INTO type_id FROM "types" WHERE types.type='фильм';
+  IF NOT FOUND THEN
+   WITH ins_id AS (
+    INSERT INTO "types"("type") VALUES (f_type) RETURNING types.id)
+   SELECT * INTO type_id FROM ins_id;
+  END IF;
+ ELSIF f_type='сериал' THEN
+  SELECT types.id INTO type_id FROM "types" WHERE types.type='сериал' AND types.season=f_season;
+  IF NOT FOUND THEN
+   WITH ins_id AS (
+    INSERT INTO "types"("type", "season") VALUES (f_type, f_season) RETURNING types.id)
+   SELECT * INTO type_id FROM ins_id;
+  END IF;
+ END IF;
+ RAISE NOTICE 'Данные для type записаны. id = %', type_id;
+ -- записываем в таблицу films данные и получаем id фильма
+ WITH ins_id AS (
+  INSERT INTO films("name", "time", kinopoisk_id, kinopoisk, imdb, id_years, id_genres, id_types)
+  VALUES (f_name, f_time, f_kinopoisk_id, f_kinopoisk, f_imdb, year_id, genre_id, type_id) RETURNING id)
+ SELECT id INTO film_id FROM ins_id;
+ RAISE NOTICE 'Данные для film записаны. id = %', film_id;
+
+ RETURN film_id;
 END;
 $$ LANGUAGE plpgsql;
 

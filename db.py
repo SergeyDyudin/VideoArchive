@@ -138,5 +138,8 @@ if __name__ == '__main__':
     # connect_file = r'C:\install\dbauth.txt'
     connect_file = 'dbauth.txt'
     with DataBase(connect_file) as base:
-        # print(base.get_data(13))
-        base.query()
+        # print(base.get_data(12))
+        # base.query()
+        dict = base.get_data(12)
+        for value in dict.values():
+            print(value)
