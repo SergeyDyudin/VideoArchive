@@ -1,5 +1,6 @@
 CREATE OR REPLACE FUNCTION ins_film(f_name text, f_genre text, f_year text, f_type film_type, f_season text,
-f_kinopoisk float, f_imdb float, f_kinopoisk_id text, f_time text)
+f_kinopoisk float, f_imdb float, f_kinopoisk_id text, f_time text, f_actors text[], f_directors text[],
+f_countries text[])
 RETURNS int
 AS $$
 DECLARE
@@ -7,6 +8,12 @@ DECLARE
 	genre_id int;
 	type_id int;
 	film_id int;
+	actor_id int;
+	director_id int;
+	country_id int;
+	act text;
+	dir text;
+	c text;
 BEGIN
     -- записываем year в таблицу years и получаем id
  SELECT years.id INTO year_id FROM years WHERE years.year=f_year;
@@ -20,7 +27,7 @@ BEGIN
  SELECT genres.id INTO genre_id FROM genres WHERE genres.genre=f_genre;
  IF NOT FOUND THEN
   WITH ins_id AS (
-   INSERT INTO genres(genre) VALUES (f_genre) RETURNING genres.id)
+   INSERT INTO genres(genre) VALUES (LOWER(f_genre)) RETURNING genres.id)
   SELECT * INTO genre_id FROM ins_id;
  END IF;
  RAISE NOTICE 'Данные для genre записаны. id = %', genre_id;
@@ -47,6 +54,39 @@ BEGIN
   VALUES (f_name, f_time, f_kinopoisk_id, f_kinopoisk, f_imdb, year_id, genre_id, type_id) RETURNING id)
  SELECT id INTO film_id FROM ins_id;
  RAISE NOTICE 'Данные для film записаны. id = %', film_id;
+ -- записываем актеров в таблицу actors и соединяем с фильмом по film_id в таблице films_actors
+ FOREACH act IN ARRAY f_actors
+ LOOP
+  SELECT actors.id INTO actor_id FROM actors WHERE actors.actor=act;
+  IF NOT FOUND THEN
+   WITH ins_id AS (
+    INSERT INTO actors(actor) VALUES (act) RETURNING actors.id)
+   SELECT * INTO actor_id FROM ins_id;
+  END IF;
+  INSERT INTO films_actors("film_id", "actor_id") VALUES (film_id, actor_id);
+ END LOOP;
+ -- записываем режисеров в таблицу directors и соединяем с фильмом по film_id в таблице films_directors
+ FOREACH dir IN ARRAY f_directors
+ LOOP
+  SELECT directors.id INTO director_id FROM directors WHERE directors.director=dir;
+  IF NOT FOUND THEN
+   WITH ins_id AS (
+    INSERT INTO directors(director) VALUES (dir) RETURNING directors.id)
+   SELECT * INTO director_id FROM ins_id;
+  END IF;
+  INSERT INTO films_directors("film_id", "director_id") VALUES (film_id, director_id);
+ END LOOP;
+ -- записываем страны в таблицу countries и соединяем с фильмом по film_id в таблице films_countries
+ FOREACH c IN ARRAY f_countries
+ LOOP
+  SELECT countries.id INTO country_id FROM countries WHERE countries.country=c;
+  IF NOT FOUND THEN
+   WITH ins_id AS (
+    INSERT INTO countries(country) VALUES (c) RETURNING countries.id)
+   SELECT * INTO country_id FROM ins_id;
+  END IF;
+  INSERT INTO films_countries("film_id", "country_id") VALUES (film_id, country_id);
+ END LOOP;
 
  RETURN film_id;
 END;
@@ -55,3 +95,13 @@ $$ LANGUAGE plpgsql;
 
 -- запрос для таблицы type
 select * from "types" where ("type"='сериал' and "season" is null) or ("type"='сериал' and "season"='season 1');
+
+
+-- добавление UNIQUE для столбца
+ALTER TABLE films ADD CONSTRAINT kinopoisk_id_key UNIQUE (kinopoisk_id);
+
+-- запрос по всем таблицам
+SELECT films.id, films.name, films.time, films.kinopoisk_id, films.kinopoisk, films.imdb, years.year, genres.genre, types.type, types.season
+FROM films LEFT JOIN years ON films.id_years=years.id
+LEFT JOIN genres ON films.id_genres=genres.id
+LEFT JOIN types ON films.id_types=types.id;

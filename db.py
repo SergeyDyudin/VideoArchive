@@ -59,11 +59,11 @@ class DataBase:
             if not num_str:
                 num_str = ws.max_row
             result['name'] = ws.cell(row=num_str, column=self._find_column(ws, 'Name')).value
-            result['type'] = ws.cell(row=num_str, column=self._find_column(ws, 'Type')).value
+            result['type'] = ws.cell(row=num_str, column=self._find_column(ws, 'Type')).value.lower()
             result['season'] = ws.cell(row=num_str, column=self._find_column(ws, 'Season')).value
             result['year'] = str(ws.cell(row=num_str, column=self._find_column(ws, 'Year')).value)
             result['genre'] = ws.cell(row=num_str, column=self._find_column(ws, 'Genre')).value
-            result['id_kinopoisk'] = ws.cell(row=num_str, column=self._find_column(ws, 'Kinopoisk ID')).value
+            result['id_kinopoisk'] = str(ws.cell(row=num_str, column=self._find_column(ws, 'Kinopoisk ID')).value)
             result['imdb'] = ws.cell(row=num_str, column=self._find_column(ws, 'IMDB')).value
             result['kinopoisk'] = ws.cell(row=num_str, column=self._find_column(ws, 'Kinopoisk')).value
             result['country'] = ws.cell(row=num_str, column=self._find_column(ws, 'Country')).value
@@ -71,6 +71,15 @@ class DataBase:
             result['director'] = ws.cell(row=num_str, column=self._find_column(ws, 'Director')).value
             result['actors'] = ws.cell(row=num_str, column=self._find_column(ws, 'Actors')).value
             if result['season']: result['season'] = result['season'].lower()
+            if result['country']:
+                result['country'] = result['country'].split(', ')
+                # result['country'] = tuple([result['country'], ''])
+            if result['director']:
+                result['director'] = result['director'].split(', ')
+                # result['director'] = tuple([result['director'], ''])
+            if result['actors']:
+                result['actors'] = result['actors'].split(', ')
+                # result['actors'] = tuple([result['actors'], ''])
         finally:
             wb.close()
         return result
@@ -81,7 +90,7 @@ class DataBase:
         :param request: запрос
         :return:
         """
-        data = self.get_data(7)
+        data = self.get_data(9)
         request = """
                     INSERT INTO {table} ({field}) 
                     VALUES (LOWER(%s)) 
@@ -89,42 +98,19 @@ class DataBase:
                     Returning id;
                     """
         try:
-            # Заполнение таблицы years и получение id_years
-            # self.cur.execute('INSERT INTO years (year) VALUES (%(year)s);', data)
-            self.cur.execute(sql.SQL(request).format(table=sql.Identifier('years'),
-                                                     field=sql.Identifier('year')), (data['year'],))
-            id_years = self.cur.fetchone()[0]
-            # Заполнение таблицы genres и получение id_genres
-            self.cur.execute(sql.SQL(request).format(table=sql.Identifier('genres'),
-                                                     field=sql.Identifier('genre')), (data['genre'],))
-            id_genres = self.cur.fetchone()[0]
-            # Заполнение таблицы types и получение id_types
+            # # Заполнение таблиц films, years, types, genres и получение id_films
             self.cur.execute("""
-                    INSERT INTO types (type, season) 
-                    VALUES (LOWER(%(type)s), LOWER(%(season)s)) 
-                    ON CONFLICT (season) DO UPDATE SET season=LOWER(Excluded.season)
-                    Returning id;
-                    """, data)
-            id_types = self.cur.fetchone()[0]
-            # # Заполнение таблицы films и получение id_films
-            self.cur.execute("""
-                                INSERT INTO films (name, id_types, id_genres, id_years, time, kinopoisk_id, 
-                                kinopoisk, imdb) 
-                                VALUES (%(name)s, %(id_types)s, %(id_genres)s, %(id_years)s, %(time)s, %(kinopoisk_id)s,
-                                %(kinopoisk)s, %(imdb)s) 
-                                Returning id;
-                                """, {'name': data['name'], 'id_types': id_types, 'id_genres': id_genres,
-                                      'id_years': id_years, 'time': data['time'], 'kinopoisk_id': data['id_kinopoisk'],
-                                      'kinopoisk': data['kinopoisk'], 'imdb': data['imdb']})
+                                SELECT ins_film(%(name)s, %(genre)s, %(year)s, %(type)s, %(season)s,  %(kinopoisk)s, 
+                                %(imdb)s, %(id_kinopoisk)s, %(time)s, %(actors)s, %(director)s, %(country)s); 
+                                """, data)
             id_films = self.cur.fetchone()[0]
+        except psycopg2.errors.UniqueViolation:
+            print('ERROR! Попытка повторной записи фильма в базу. Такой фильм уже есть в базе.')
         except Exception as err:
             print('Error! ', err)
             self.conn.rollback()
         else:
             print('Запрос выполнен. Делается коммит.')
-            print(f'ID years = {id_years}')
-            print(f'ID genres = {id_genres}')
-            print(f'ID types = {id_types}')
             print(f'ID films = {id_films}')
             self.conn.commit()
         # print(self.cur.fetchall())
@@ -139,7 +125,7 @@ if __name__ == '__main__':
     connect_file = 'dbauth.txt'
     with DataBase(connect_file) as base:
         # print(base.get_data(12))
-        # base.query()
-        dict = base.get_data(12)
-        for value in dict.values():
-            print(value)
+        base.query()
+        # for (i, v) in base.get_data(12).items():
+        #     print(i, '===', v)
+
