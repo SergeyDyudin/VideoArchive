@@ -110,7 +110,7 @@ class DataBase:
             print('Error! ', err)
             self.conn.rollback()
         else:
-            print('Запрос выполнен. Делается коммит.')
+            print('Данные успешно добавлены в базу. Делается коммит.')
             print(f'ID films = {id_films}')
             self.conn.commit()
         # print(self.cur.fetchall())

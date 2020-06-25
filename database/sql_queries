@@ -101,7 +101,12 @@ select * from "types" where ("type"='сериал' and "season" is null) or ("ty
 ALTER TABLE films ADD CONSTRAINT kinopoisk_id_key UNIQUE (kinopoisk_id);
 
 -- запрос по всем таблицам
-SELECT films.id, films.name, films.time, films.kinopoisk_id, films.kinopoisk, films.imdb, years.year, genres.genre, types.type, types.season
+SELECT films.id, films.name, films.time, films.kinopoisk_id, films.kinopoisk, films.imdb, years.year, genres.genre, types.type, types.season, string_agg(actors.actor, ', ') AS actors
 FROM films LEFT JOIN years ON films.id_years=years.id
 LEFT JOIN genres ON films.id_genres=genres.id
-LEFT JOIN types ON films.id_types=types.id;
+LEFT JOIN types ON films.id_types=types.id
+LEFT JOIN films_actors ON films.id=films_actors.film_id LEFT JOIN actors ON films_actors.actor_id=actors.id GROUP BY films.id, years.year, genres.genre, types.type, types.season, films.name, films.time, films.kinopoisk_id, films.kinopoisk, films.imdb;
+
+
+-- запрос для вставки
+SELECT ins_film('13 убийц', 'боевик', '2010', 'фильм', '',  7.041, 7.60, '466584', '141 мин. / 02:21', ARRAY ['Кодзи Якусё', 'Такаюки Ямада', 'Юсукэ Исэя', 'Горо Инагаки', 'Масатика Итимура', 'Микидзиро Хира', 'Хироки Мацуката', 'Цуёси Ихара', 'Арата Фурута', 'Икки Савамура'], ARRAY ['Такаси Миике'], ARRAY ['Япония', ' Великобритания']);
