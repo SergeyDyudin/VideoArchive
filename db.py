@@ -60,7 +60,7 @@ class DataBase:
                 num_str = ws.max_row
             result['name'] = ws.cell(row=num_str, column=self._find_column(ws, 'Name')).value
             result['type'] = ws.cell(row=num_str, column=self._find_column(ws, 'Type')).value.lower()
-            result['season'] = ws.cell(row=num_str, column=self._find_column(ws, 'Season')).value
+            result['season'] = str(ws.cell(row=num_str, column=self._find_column(ws, 'Season')).value).lower()
             result['year'] = str(ws.cell(row=num_str, column=self._find_column(ws, 'Year')).value)
             result['genre'] = ws.cell(row=num_str, column=self._find_column(ws, 'Genre')).value
             result['id_kinopoisk'] = str(ws.cell(row=num_str, column=self._find_column(ws, 'Kinopoisk ID')).value)
@@ -73,6 +73,8 @@ class DataBase:
             if result['season']: result['season'] = result['season'].lower()
             if result['country']:
                 result['country'] = result['country'].split(', ')
+                for i in range(len(result['country'])):
+                    result['country'][i] = result['country'][i].strip()
                 # result['country'] = tuple([result['country'], ''])
             if result['director']:
                 result['director'] = result['director'].split(', ')
@@ -84,34 +86,35 @@ class DataBase:
             wb.close()
         return result
 
-    def query(self, request=None):
+    def query(self, id_str=None):
         """Выполнение и коммит запроса.
 
-        :param request: запрос
+        :param id_str:int номер строки для запроса из xlsx
         :return:
         """
-        data = self.get_data(9)
-        request = """
-                    INSERT INTO {table} ({field}) 
-                    VALUES (LOWER(%s)) 
-                    ON CONFLICT ({field}) DO UPDATE SET {field}=LOWER(Excluded.{field}) 
-                    Returning id;
-                    """
+        data = self.get_data(id_str)
+        # request = """
+        #             INSERT INTO {table} ({field})
+        #             VALUES (LOWER(%s))
+        #             ON CONFLICT ({field}) DO UPDATE SET {field}=LOWER(Excluded.{field})
+        #             Returning id;
+        #             """
         try:
-            # # Заполнение таблиц films, years, types, genres и получение id_films
+            # Заполнение всех таблиц и получение id_films
             self.cur.execute("""
                                 SELECT ins_film(%(name)s, %(genre)s, %(year)s, %(type)s, %(season)s,  %(kinopoisk)s, 
                                 %(imdb)s, %(id_kinopoisk)s, %(time)s, %(actors)s, %(director)s, %(country)s); 
                                 """, data)
             id_films = self.cur.fetchone()[0]
         except psycopg2.errors.UniqueViolation:
-            print('ERROR! Попытка повторной записи фильма в базу. Такой фильм уже есть в базе.')
+            print(f'ERROR! Попытка повторной записи фильма в базу. Такой фильм уже есть в базе.{data["name"]}')
         except Exception as err:
+            print(data["name"])
             print('Error! ', err)
             self.conn.rollback()
         else:
             print('Данные успешно добавлены в базу. Делается коммит.')
-            print(f'ID films = {id_films}')
+            print(f'{data["name"]} ID film = {id_films}')
             self.conn.commit()
         # print(self.cur.fetchall())
 
@@ -125,7 +128,7 @@ if __name__ == '__main__':
     connect_file = 'dbauth.txt'
     with DataBase(connect_file) as base:
         # print(base.get_data(12))
-        base.query()
+        base.query(17)
         # for (i, v) in base.get_data(12).items():
         #     print(i, '===', v)
 

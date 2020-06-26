@@ -24,7 +24,7 @@ BEGIN
  END IF;
  RAISE NOTICE 'Данные для year записаны. id = %', year_id;
  -- записываем genre в таблицу genres и получаем id
- SELECT genres.id INTO genre_id FROM genres WHERE genres.genre=f_genre;
+ SELECT genres.id INTO genre_id FROM genres WHERE genres.genre=LOWER(f_genre);
  IF NOT FOUND THEN
   WITH ins_id AS (
    INSERT INTO genres(genre) VALUES (LOWER(f_genre)) RETURNING genres.id)
@@ -100,6 +100,10 @@ select * from "types" where ("type"='сериал' and "season" is null) or ("ty
 -- добавление UNIQUE для столбца
 ALTER TABLE films ADD CONSTRAINT kinopoisk_id_key UNIQUE (kinopoisk_id);
 
+-- удаление UNIQUE из столбца
+ALTER TABLE films DROP CONSTRAINT kinopoisk_id_key;
+
+
 -- запрос по всем таблицам
 SELECT films.id, films.name, films.time, films.kinopoisk_id, films.kinopoisk, films.imdb, years.year, genres.genre, types.type, types.season, string_agg(actors.actor, ', ') AS actors
 FROM films LEFT JOIN years ON films.id_years=years.id
@@ -110,3 +114,7 @@ LEFT JOIN films_actors ON films.id=films_actors.film_id LEFT JOIN actors ON film
 
 -- запрос для вставки
 SELECT ins_film('13 убийц', 'боевик', '2010', 'фильм', '',  7.041, 7.60, '466584', '141 мин. / 02:21', ARRAY ['Кодзи Якусё', 'Такаюки Ямада', 'Юсукэ Исэя', 'Горо Инагаки', 'Масатика Итимура', 'Микидзиро Хира', 'Хироки Мацуката', 'Цуёси Ихара', 'Арата Фурута', 'Икки Савамура'], ARRAY ['Такаси Миике'], ARRAY ['Япония', ' Великобритания']);
+
+
+-- добавление DELETE ON CASCADE для внешнего ключа
+ALTER TABLE films_countries DROP CONSTRAINT films_countries_film_id_fkey, ADD CONSTRAINT films_countries_film_id_fkey FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE;
