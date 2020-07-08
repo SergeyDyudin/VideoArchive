@@ -2,19 +2,23 @@ import psycopg2
 from psycopg2 import sql
 import openpyxl
 
-data_file = r'C:\install\Films.xlsx'
+DATA_FILE = r'C:\install\Films.xlsx'
+CONNECT_FILE = 'dbauth.txt'
 
 
 class DataBase:
     """Класс для работы с базой данных
     """
 
-    def __init__(self, conn_file):
+    def __init__(self, conn_file=None):
+        if not conn_file:
+            conn_file = CONNECT_FILE
         with open(conn_file) as file:
             db_name = file.readline().rstrip()
             db_user = file.readline().rstrip()
             db_password = file.readline().rstrip()
             db_host = file.readline().rstrip()
+        # Вывод данных о базе для тестирования - потом убрать
         print(f'db = {db_name}', f'user = {db_user}', f'pass = {db_password}', f'host = {db_host}', sep='\n')
         try:
             self.conn = psycopg2.connect(database=db_name, user=db_user, password=db_password, host=db_host)
@@ -54,7 +58,7 @@ class DataBase:
         """
         result = {}
         try:
-            wb = openpyxl.load_workbook(filename=data_file)
+            wb = openpyxl.load_workbook(filename=DATA_FILE)
             ws = wb.active
             if not num_str:
                 num_str = ws.max_row
@@ -87,9 +91,9 @@ class DataBase:
         return result
 
     def query(self, id_str=None):
-        """Выполнение и коммит запроса.
+        """Выполнение и коммит запроса для записи нового фильма в базу.
 
-        :param id_str:int номер строки для запроса из xlsx
+        :param id_str:int номер строки для запроса из xlsx. Если не указан, то записывается последняя строка из xlsx.
         :return:
         """
         data = self.get_data(id_str)
@@ -118,15 +122,28 @@ class DataBase:
             self.conn.commit()
         # print(self.cur.fetchall())
 
+    def request(self, text):
+        """
+        Выполнение запроса text в базе.
+
+        :param text: str Текст запроса в базу.
+        :return: res: результат запроса
+        """
+        try:
+            self.cur.execute(text)
+            res = self.cur.fetchall()
+        except Exception as e:
+            print('ERROR! ', e)
+        return res
+
     def close(self):
         self.cur.close()
         self.conn.close()
 
 
 if __name__ == '__main__':
-    # connect_file = r'C:\install\dbauth.txt'
-    connect_file = 'dbauth.txt'
-    with DataBase(connect_file) as base:
+    # CONNECT_FILE = r'C:\install\dbauth.txt'
+    with DataBase(CONNECT_FILE) as base:
         # print(base.get_data(12))
         base.query(17)
         # for (i, v) in base.get_data(12).items():

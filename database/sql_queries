@@ -69,7 +69,7 @@ BEGIN
  FOREACH dir IN ARRAY f_directors
  LOOP
   SELECT directors.id INTO director_id FROM directors WHERE directors.director=dir;
-  IF NOT FOUND THEN
+  F NOT FOUND THEN
    WITH ins_id AS (
     INSERT INTO directors(director) VALUES (dir) RETURNING directors.id)
    SELECT * INTO director_id FROM ins_id;
@@ -118,3 +118,6 @@ SELECT ins_film('13 убийц', 'боевик', '2010', 'фильм', '',  7.04
 
 -- добавление DELETE ON CASCADE для внешнего ключа
 ALTER TABLE films_countries DROP CONSTRAINT films_countries_film_id_fkey, ADD CONSTRAINT films_countries_film_id_fkey FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE;
+
+-- запрос для получения количества фильмов для каждой страны
+SELECT countries.country, count(films_countries.country_id) FROM films_countries, countries WHERE films_countries.country_id=countries.id GROUP BY countries.country;
