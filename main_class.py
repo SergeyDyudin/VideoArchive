@@ -8,6 +8,7 @@ from kinopoisk_parser import KinopoiskParser
 import sys
 import time
 from threading import Thread  # для рисования progressbar
+from db import DataBase, CONNECT_FILE
 
 
 # TODO: обновить файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
@@ -390,12 +391,16 @@ if __name__ == "__main__":
                             film = Film(file, adress, serv_disk, chief_disk)
                             if film.copy_to_servdisk():
                                 browser.write_data()  # находим и дописываем данные с Кинопоиска
+                                with DataBase(CONNECT_FILE) as base:  # запись в Postgresql
+                                    base.query()
                             film.copy_to_chiefdisk()
                             print("=" * 150)
                     elif not dirs:  # если не в корне - значит это сериал. Запись происходит когда уже в папке с сериями
                         serial = Serial(files, adress, serv_disk, chief_disk)
                         if serial.copy_to_servdisk():
                             browser.write_data()  # находим и дописываем данные с Кинопоиска
+                            with DataBase(CONNECT_FILE) as base:  # запись в Postgresql
+                                base.query()
                         print("-"*150)
                         serial.copy_to_chiefdisk()
                         print("=" * 150)

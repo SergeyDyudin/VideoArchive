@@ -13,6 +13,11 @@ class Graph:
         self.db = DataBase()
 
     def country_films_20(self):
+        """
+        Возвращает график по странам, с количеством фильмов в базе больше 20.
+        В данный момент возращает два графика: Один напрямую через matplotlib, второй через pandas.
+        :return:
+        """
         req = """SELECT countries.country, count(films_countries.country_id) AS col
                 FROM films_countries, countries
                 WHERE films_countries.country_id=countries.id
