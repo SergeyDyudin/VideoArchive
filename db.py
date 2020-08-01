@@ -148,4 +148,3 @@ if __name__ == '__main__':
         base.query(17)
         # for (i, v) in base.get_data(12).items():
         #     print(i, '===', v)
-
