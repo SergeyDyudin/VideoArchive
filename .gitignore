@@ -2,3 +2,4 @@ geckodriver.log
 dbauth.txt
 venv
 .idea
+.DS_store
