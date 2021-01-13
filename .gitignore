@@ -3,3 +3,5 @@ dbauth.txt
 venv
 .idea
 .DS_store
+__pycache__
+Телефоны.xlsx
