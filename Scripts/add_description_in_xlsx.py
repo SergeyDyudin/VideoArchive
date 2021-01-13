@@ -5,12 +5,17 @@ from kinopoisk_parser import KinopoiskParser
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from pathlib import Path
+import os
 
 browser = KinopoiskParser()
 driver_path = str(Path(__file__).parent.parent.joinpath('web-drivers').joinpath('chromedriver'))
 file_xlsx = Path(__file__).parent.parent.joinpath('database').joinpath('Films.xlsx')
 
-browser.browser = webdriver.Chrome(driver_path)
+if os.name == 'nt':  # Windows OS
+    browser.open_selenium()
+elif os.name == 'posix':  # Mac OS
+    browser.browser = webdriver.Chrome(driver_path)
+
 wb = openpyxl.load_workbook(filename=file_xlsx)
 ws = wb.active
 font = Font(name='Times New Roman',
@@ -21,9 +26,8 @@ font = Font(name='Times New Roman',
                     underline='none',
                     strike=False,
                     color='FF000000')
-for row in ws.iter_rows(min_row=2, max_row=4):
-# for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
-    result = {}
+
+for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
     id_film = str(row[5].value)
     url = f'https://www.kinopoisk.ru/film/{id_film}'
     browser.browser.get(url)
@@ -34,7 +38,7 @@ for row in ws.iter_rows(min_row=2, max_row=4):
         description = ''
         items = soup.find('div', {'class', 'styles_filmSynopsis__zLClu'}).find_all('p')
         for i in items:
-            description += i.contents[0]
+            description += ' ' + i.contents[0]
         row[13].value = description
         row[13].font = font
         wb.save(file_xlsx)
