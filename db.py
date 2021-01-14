@@ -1,9 +1,20 @@
 import psycopg2
 from psycopg2 import sql
 import openpyxl
+from pathlib import Path
 
-DATA_FILE = r'C:\install\Films.xlsx'
-CONNECT_FILE = 'dbauth.txt'
+
+def get_xlsx_path():
+    """ Возвращает путь до Films.xlsx, находящегося в каталоге проекта"""
+    return str(Path(__file__).parent.joinpath('database').joinpath('Films.xlsx'))
+
+
+def get_dbauth_file_path():
+    """ Возвращает путь до Films.xlsx, находящегося в каталоге проекта"""
+    return str(Path(__file__).parent.joinpath('dbauth.txt'))
+
+DATA_FILE = get_xlsx_path()
+CONNECT_FILE = get_dbauth_file_path()
 
 
 class DataBase:
@@ -86,6 +97,7 @@ class DataBase:
             if result['actors']:
                 result['actors'] = result['actors'].split(', ')
                 # result['actors'] = tuple([result['actors'], ''])
+            result['id'] = ws.cell(row=num_str, column=self._find_column(ws, 'ID')).value
             result['description'] = ws.cell(row=num_str, column=self._find_column(ws, 'Description')).value
         finally:
             wb.close()
@@ -124,19 +136,23 @@ class DataBase:
             self.conn.commit()
         # print(self.cur.fetchall())
 
-    def request(self, text):
+    def request(self, text, param=None):
         """
         Выполнение запроса text в базе.
 
         :param text: str Текст запроса в базу.
+        :param param: tuple Кортеж параметров для запроса (param1, )
         :return: res: результат запроса
         """
         try:
-            self.cur.execute(text)
-            res = self.cur.fetchall()
+            # self.cur.mogrify(text, param)
+            self.cur.execute(text, param)
+            print(f'Выполнено для записи {param[1]}')
+            self.conn.commit()
         except Exception as e:
             print('ERROR! ', e)
-        return res
+        # else:
+        #     return res
 
     def close(self):
         self.cur.close()

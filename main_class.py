@@ -205,8 +205,8 @@ class Film:
         """
         for cell in sheet[1]:
             if cell.value == column:
-                return cell.column_letter  #column
-        return sheet.cell(sheet.max_row, sheet.max_column + 1).column_letter  #column
+                return cell.column_letter  # column
+        return sheet.cell(sheet.max_row, sheet.max_column + 1).column_letter  # column
         # letter = (cell.column_letter for cell in sheet[1] if cell.value == column)
         # if isinstance(next(letter), str):
         #     return letter + str(sheet.max_row)
@@ -228,7 +228,7 @@ class Film:
                     (float(os.path.getsize(dest)) / float(os.path.getsize(source))) * 100)
                 steps = int(percent / 5)
                 source_size = int(os.path.getsize(dest) / 1024000)
-                sys.stdout.write(f"{source_size} / {int(self.file_size*1024)} Mb   [ "
+                sys.stdout.write(f"{source_size} / {int(self.file_size * 1024)} Mb   [ "
                                  + "{:20s}".format('█' * steps) + f" ]   {percent}%  Копирование {source}")
                 sys.stdout.flush()
                 time.sleep(0.05)
@@ -240,6 +240,7 @@ class Serial(Film):
 
     В отличии от класса Films, ему передается не название фильма, а список серий сериала из текущей папки.
     """
+
     def __init__(self, files, path, serv, chief, name=None):
         """
         :param files: список серий
@@ -401,7 +402,7 @@ if __name__ == "__main__":
                             browser.write_data()  # находим и дописываем данные с Кинопоиска
                             with DataBase(CONNECT_FILE) as base:  # запись в Postgresql
                                 base.query()
-                        print("-"*150)
+                        print("-" * 150)
                         serial.copy_to_chiefdisk()
                         print("=" * 150)
             else:
