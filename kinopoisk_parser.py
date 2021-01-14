@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
+from pathlib import Path
 import time
 import openpyxl
 from openpyxl.styles import Font
@@ -347,7 +348,13 @@ class KinopoiskParser:
         url = 'https://www.kinopoisk.ru/'
         # Если нужен профиль в Firefox, то добавить следующий параметр в webdriver.Firefox() (поменять на свой профиль)
         # firefox_profile=r'C:\Users\video\AppData\Roaming\Mozilla\Firefox\Profiles\h3qugs8n.Kinopisk')
-        self.browser = webdriver.Firefox()
+
+        if os.name == 'nt':  # Windows OS
+            self.browser = webdriver.Firefox()
+        elif os.name == 'posix':  # Mac OS
+            driver_path = str(Path(__file__).parent.joinpath('web-drivers').joinpath('chromedriver'))
+            self.browser = webdriver.Chrome(driver_path)
+
         self.browser.get(url)
 
     def correcting_names(self, name: str):

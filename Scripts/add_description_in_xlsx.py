@@ -8,13 +8,9 @@ from pathlib import Path
 import os
 
 browser = KinopoiskParser()
-driver_path = str(Path(__file__).parent.parent.joinpath('web-drivers').joinpath('chromedriver'))
 file_xlsx = Path(__file__).parent.parent.joinpath('database').joinpath('Films.xlsx')
 
-if os.name == 'nt':  # Windows OS
-    browser.open_selenium()
-elif os.name == 'posix':  # Mac OS
-    browser.browser = webdriver.Chrome(driver_path)
+browser.open_selenium()
 
 wb = openpyxl.load_workbook(filename=file_xlsx)
 ws = wb.active
