@@ -187,6 +187,7 @@ class KinopoiskParser:
             results['imdb'] = imdb
         except AttributeError:
             print('Оценок у фильма еще нет')
+        results['description'] = KinopoiskParser.get_description(soup)
         return results
 
     @staticmethod
@@ -243,7 +244,23 @@ class KinopoiskParser:
             results['imdb'] = imdb.strip()
         except AttributeError:
             print('Оценок у фильма еще нет')
+        results['description'] = KinopoiskParser.get_description(soup)
         return results
+
+    @staticmethod
+    def get_description(soup=None):
+        """Получаем описание фильма/сериала из готового soup"""
+        if not soup:
+            print('Не передана soup-страничка для парсинга описания')
+            return None
+        description = ''
+        try:
+            items = soup.find('div', {'class', 'styles_filmSynopsis__zLClu'}).find_all('p')
+            for i in items:
+                description += ' ' + i.contents[0]
+        except Exception as e:
+            print(e, 'Не удалось получить описание', sep='\n')
+        return description
 
     def find_film_id(self):
         """Нахождение ID фильма по названию и году на Кинопоиске.
@@ -479,6 +496,8 @@ class KinopoiskParser:
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Time')).font = font
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Director')).value = self.result["director"]
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Director')).font = font
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Description')).value = self.result["description"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Description')).font = font
             # Актеры - словарь в словаре. Превращаем в единую строку для записи в файл
             actors = ''
             for key, value in self.result['actors'].items():

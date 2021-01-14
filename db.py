@@ -86,6 +86,7 @@ class DataBase:
             if result['actors']:
                 result['actors'] = result['actors'].split(', ')
                 # result['actors'] = tuple([result['actors'], ''])
+            result['description'] = ws.cell(row=num_str, column=self._find_column(ws, 'Description')).value
         finally:
             wb.close()
         return result
@@ -107,7 +108,8 @@ class DataBase:
             # Заполнение всех таблиц и получение id_films
             self.cur.execute("""
                                 SELECT ins_film(%(name)s, %(genre)s, %(year)s, %(type)s, %(season)s,  %(kinopoisk)s, 
-                                %(imdb)s, %(id_kinopoisk)s, %(time)s, %(actors)s, %(director)s, %(country)s); 
+                                %(imdb)s, %(id_kinopoisk)s, %(time)s, %(actors)s, %(director)s, %(country)s, 
+                                %(description)s); 
                                 """, data)
             id_films = self.cur.fetchone()[0]
         except psycopg2.errors.UniqueViolation:
