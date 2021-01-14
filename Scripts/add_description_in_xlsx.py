@@ -27,7 +27,7 @@ font = Font(name='Times New Roman',
                     strike=False,
                     color='FF000000')
 
-for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+for row in ws.iter_rows(min_row=1248, max_row=ws.max_row):
     id_film = str(row[5].value)
     url = f'https://www.kinopoisk.ru/film/{id_film}'
     browser.browser.get(url)
@@ -42,7 +42,7 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
         row[13].value = description
         row[13].font = font
         wb.save(file_xlsx)
-        print(f'Описание для {row[0].value} записаны')
+        print(f'Описание для {row[0].value} записано')
     except Exception as exc:
         print(exc)
         print(f'Описание не получилось достать. {row[0].value}')
