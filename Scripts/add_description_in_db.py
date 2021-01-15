@@ -1,3 +1,6 @@
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
 from db import DataBase, get_xlsx_path, get_dbauth_file_path
 import openpyxl
 
