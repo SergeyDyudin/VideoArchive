@@ -11,7 +11,7 @@ def get_film_icon():
         id_film = str(row[5].value)
         url = f'https://www.kinopoisk.ru/images/sm_film/{id_film}.jpg'
         req = requests.get(url)
-        with open(f'/Users/sergeydyudin/Documents/PycharmProjects/films_site/main/static/main/img/icons/{id_film}_icon.jpg', 
+        with open(f'/Users/sergeydyudin/Documents/PycharmProjects/films_site/media/main/icons/{id_film}_icon.jpg', 
             'wb') as icon_file:
             icon_file.write(req.content)
             print(f'Загружена иконка для фильма {id_film}')

@@ -16,7 +16,14 @@ from openpyxl.styles import Font
 import re
 import os
 
-data_file = r'C:\install\Films.xlsx'  # xlsx-файл для хранения базы данных
+
+# data_file = r'C:\install\Films.xlsx'  # xlsx-файл для хранения базы данных
+data_file = str(Path(__file__).parent.joinpath('database').joinpath('Films.xlsx'))
+ICON_PATHS = (
+    '/Users/sergeydyudin/Documents/PycharmProjects/films_site/media/main/icons/',
+    'C:\\Users\\video\\Documents\\Projects\\Films_site\\media\\main\\icons\\',
+    '/home/zs-content-02-usr/projects/django/films_site/media/main/icons/'
+)
 
 
 class ProxyManager:
@@ -262,6 +269,24 @@ class KinopoiskParser:
             print(e, 'Не удалось получить описание', sep='\n')
         return description
 
+    def get_icon(self):
+        id_film = self.result['id_kinopoisk']
+        url = f'https://www.kinopoisk.ru/images/sm_film/{id_film}.jpg'
+
+        path_to_icons = ''
+        for p in ICON_PATHS:
+            if os.path.exists(p):
+                path_to_icons = p
+                break
+        if not path_to_icons:
+            print('Не удалось найти путь к папке с иконками')
+            return
+        req = requests.get(url)
+        with open(path_to_icons + f'{id_film}_icon.jpg', 'wb') as icon_file:
+            icon_file.write(req.content)
+            print(f'Загружена иконка для фильма {id_film}')
+            return f'main/icons/{id_film}_icon.jpg'
+
     def find_film_id(self):
         """Нахождение ID фильма по названию и году на Кинопоиске.
 
@@ -504,6 +529,9 @@ class KinopoiskParser:
                 actors += value + ", "
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Actors')).value = actors[:-2]
             ws.cell(row=ws.max_row, column=self._find_column(ws, 'Actors')).font = font
+            self.result['icon'] = self.get_icon()
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Icon')).value = self.result["icon"]
+            ws.cell(row=ws.max_row, column=self._find_column(ws, 'Icon')).font = font
         except KeyError as e:
             print('Нет значения: ', e)
         self.name_film = ws.cell(row=ws.max_row, column=self._find_column(ws, 'Name')).value
