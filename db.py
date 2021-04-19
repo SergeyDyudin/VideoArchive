@@ -99,6 +99,7 @@ class DataBase:
                 # result['actors'] = tuple([result['actors'], ''])
             result['id'] = ws.cell(row=num_str, column=self._find_column(ws, 'ID')).value
             result['description'] = ws.cell(row=num_str, column=self._find_column(ws, 'Description')).value
+            result['icon'] = ws.cell(row=num_str, column=self._find_column(ws, 'Icon')).value
         finally:
             wb.close()
         return result
@@ -121,7 +122,7 @@ class DataBase:
             self.cur.execute("""
                                 SELECT ins_film(%(name)s, %(genre)s, %(year)s, %(type)s, %(season)s,  %(kinopoisk)s, 
                                 %(imdb)s, %(id_kinopoisk)s, %(time)s, %(actors)s, %(director)s, %(country)s, 
-                                %(description)s); 
+                                %(description)s, %(icon)s); 
                                 """, data)
             id_films = self.cur.fetchone()[0]
         except psycopg2.errors.UniqueViolation:

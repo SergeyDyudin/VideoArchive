@@ -8,7 +8,7 @@ from kinopoisk_parser import KinopoiskParser
 import sys
 import time
 from threading import Thread  # для рисования progressbar
-from db import DataBase, CONNECT_FILE
+from db import DataBase, CONNECT_FILE, DATA_FILE
 
 
 # TODO: обновить файлы requirements.txt c необходимыми библиотеками для проектов (pip freeze > requirements.txt)
@@ -18,7 +18,8 @@ from db import DataBase, CONNECT_FILE
 class Film:
     """Класс занимается переименованием, копированием фильмов, записью в xlsx данных.
     """
-    data_file = r'C:\install\Films.xlsx'  # файл для хранения данных о фильмах и сериалах
+    data_file = DATA_FILE  # файл для хранения данных о фильмах и сериалах
+    # data_file = r'C:\install\Films.xlsx'  # файл для хранения данных о фильмах и сериалах
 
     def __init__(self, name: str, path: str, serv: str, chief: str):
         """
