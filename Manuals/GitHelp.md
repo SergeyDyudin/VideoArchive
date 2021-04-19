@@ -1,5 +1,7 @@
 # WORK WITH GIT
 
+Для аутентификации на GitHub через https теперь используются токены.  
+
 **git init** - создает каталог .git в текущем каталоге, содержащий все файлы репозитария  
 **git clone** git://github/... - получить копию существующего репозитария  
 **git clone *https://github.com/project* *myproject*** - клонировать репозитарий в папку myproject
