@@ -61,7 +61,10 @@
 	 
 
 **git reset** *HEAD Readme.txt* - отмена индексации файла  
-**git checkout** --*Readme.txt* - отмена изменений в файле рабочей области (откат к предыдущему коммиту)
+**git checkout** --*Readme.txt* - отмена изменений в файле рабочей области (откат к предыдущему коммиту)  
+**git restore** - новая команда, которая замещает *reset* и *checkout*
+**git restore** *file* - отмена изменений в файле рабочей области (аналог *checkout*)  
+**git restore** --staged *file* - отмена индексации файла (аналог *reset*)  
 
 **git remote** - список удаленных репозитариев
 
@@ -103,7 +106,7 @@
 **git checkout** *[ветка]* - переключение в ветку *[ветка]*  
 **git checkout -b** *serverfix origin/serverfix* - создание ветки локально на основе удаленной ветки  
 
-**git branch -d** *client* - удалить ветку client*  
+**git branch -d** *client* - удалить ветку *client*  
 **git branch** *testing* - создать ветку *testing*  
 **git branch** - показать список веток  
 **git branch -v** - посмотреть последний коммит для каждой ветки  
