@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION ins_film(f_name text, f_genre text, f_year text, f_type film_type, f_season text,
 f_kinopoisk float, f_imdb float, f_kinopoisk_id text, f_time text, f_actors text[], f_directors text[],
-f_countries text[], f_description text)
+f_countries text[], f_description text, f_icon text)
 RETURNS int
 AS $$
 DECLARE
@@ -15,6 +15,7 @@ DECLARE
 	dir text;
 	c text;
 	description text;
+    icon text;
 BEGIN
     -- записываем year в таблицу years и получаем id
  SELECT years.id INTO year_id FROM years WHERE years.year=f_year;
@@ -51,8 +52,8 @@ BEGIN
  RAISE NOTICE 'Данные для type записаны. id = %', type_id;
  -- записываем в таблицу films данные и получаем id фильма
  WITH ins_id AS (
-  INSERT INTO films("name", "time", kinopoisk_id, kinopoisk, imdb, id_years, id_genres, id_types, description)
-  VALUES (f_name, f_time, f_kinopoisk_id, f_kinopoisk, f_imdb, year_id, genre_id, type_id, f_description) RETURNING id)
+  INSERT INTO films("name", "time", kinopoisk_id, kinopoisk, imdb, id_years, id_genres, id_types, description, icon)
+  VALUES (f_name, f_time, f_kinopoisk_id, f_kinopoisk, f_imdb, year_id, genre_id, type_id, f_description, f_icon) RETURNING id)
  SELECT id INTO film_id FROM ins_id;
  RAISE NOTICE 'Данные для film записаны. id = %', film_id;
  -- записываем актеров в таблицу actors и соединяем с фильмом по film_id в таблице films_actors
