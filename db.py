@@ -13,7 +13,9 @@ def get_dbauth_file_path():
     """ Возвращает путь до Films.xlsx, находящегося в каталоге проекта"""
     return str(Path(__file__).parent.joinpath('dbauth.txt'))
 
-DATA_FILE = get_xlsx_path()
+
+DATA_FILE = r'C:\install\Films.xlsx'
+# DATA_FILE = get_xlsx_path()
 CONNECT_FILE = get_dbauth_file_path()
 
 
@@ -68,8 +70,8 @@ class DataBase:
         :return: result
         """
         result = {}
+        wb = openpyxl.load_workbook(filename=DATA_FILE)
         try:
-            wb = openpyxl.load_workbook(filename=DATA_FILE)
             ws = wb.active
             if not num_str:
                 num_str = ws.max_row

@@ -149,35 +149,41 @@ class KinopoiskParser:
         soup = BeautifulSoup(content, features="html.parser")
         results = {}
         actors = {}
-        results['film_name'] = soup.find('span', {'class': 'moviename-title-wrapper'}).text
-        all_movie_info = soup.find_all('div', {'class': 'movie-info__table-container'})  # .find('a').text
+        results['film_name'] = soup.find('span', {'class': 'styles_title__2l0HH'}).text
+        # results['film_name'] = soup.find('span', {'class': 'moviename-title-wrapper'}).text
+        all_movie_info = soup.find_all('div', {'data-test-id': 'encyclopedic-table'})[0].contents
+        # all_movie_info = soup.find_all('div', {'class': 'movie-info__table-container'})  # .find('a').text
         for info in all_movie_info:
             """Получаем основные данные о фильме
             """
-            items = info.find('table', {'class': 'info'}).find_all('tr')  # Берем только таблицу INFO о фильме
-            for item in items:
-                i = item.find('td')
-                if i.text == 'год':
-                    year = i.nextSibling.nextSibling.text
-                    results['year'] = year.strip()
-                if i.text == 'страна':
-                    country = i.nextSibling.nextSibling.text
-                    results['country'] = country.strip()
-                if i.text == 'режиссер':
-                    director = i.nextSibling.text
-                    results['director'] = director.strip()
-                if i.text == 'жанр':
-                    genre = i.nextSibling.find('a').text
-                    results['genre'] = genre.strip()
-                if i.text == 'время':
-                    ftime = i.nextSibling.text
+            # items = info.find('table', {'class': 'info'}).find_all('tr')  # Берем только таблицу INFO о фильме
+            # for item in items:
+            # i = item.find('td')
+            if info.next_element.text.lower() == 'год производства':
+                year = info.next_element.next_sibling.next_element.text
+                results['year'] = year.strip()
+            if info.next_element.text.lower() == 'страна':
+                country = info.next_element.next_sibling.text
+                results['country'] = country.strip()
+            if info.next_element.text.lower() == 'режиссер':
+                director = info.next_element.next_sibling.text
+                results['director'] = director.strip()
+            if info.next_element.text.lower() == 'жанр':
+                genre = info.next_element.next_sibling.text.split(',')[0]
+                # genre = info.next_element.next_sibling.text
+                results['genre'] = genre.strip()
+            if info.next_element.text.lower() == 'время':
+                    ftime = info.next_element.next_sibling.text
                     results['time'] = ftime.strip()
             """ Получаем актеров фильма
             """
-            items = soup.find('div', {'id': 'actorList'}).find('ul').find_all('a')
-            # items = info.find('div', {'id': 'actorList'}).find('ul').find_all('a')
-            for i, item in enumerate(items):
-                actors[i] = item.text
+        # items = soup.find('div', {'id': 'actorList'}).find('ul').find_all('a')
+        items = soup.find('div', {'class': 'styles_actors__2zt1j'}).find('ul').find_all('a')
+
+        # items = info.find('div', {'id': 'actorList'}).find('ul').find_all('a')
+        for i, item in enumerate(items):
+            actors[i] = item.text
+
         try:
             actors.popitem()  # Удаляем актера "...". Во всех фильмах многоточие в конце списка
         except KeyError:
@@ -186,8 +192,12 @@ class KinopoiskParser:
 
         # Получаем оценки фильма
         try:
-            kinopoisk = soup.find('div', {'class': "block_2"}).find('div', {'class': 'div1'}).text
-            imdb = soup.find('div', {'class': "block_2"}).find('div', {'class': 'div1'}).nextSibling.nextSibling.text
+            kinopoisk = soup.find('div', {'class': "styles_ratingContainer__24Wyy"}).next_element.next_element.\
+                next_element.text
+            # kinopoisk = soup.find('div', {'class': "block_2"}).find('div', {'class': 'div1'}).text
+            # imdb = soup.find('div', {'class': "block_2"}).find('div', {'class': 'div1'}).nextSibling.nextSibling.text
+            imdb = soup.find('div', {'class': "styles_ratingContainer__24Wyy"}).next_element.next_element.nextSibling.\
+                next_element.text
             kinopoisk = kinopoisk.strip().split('\n')[0]
             imdb = imdb.strip().split()[1]
             results['kinopoisk'] = kinopoisk
@@ -210,10 +220,11 @@ class KinopoiskParser:
         actors = {}
         # results['film_name'] = soup.find('div',
         #                                  {'class': 'film-header-group film-basic-info__title'}).next_element.next.text
-        results['film_name'] = soup.find('div',
-                                         {'class': 'film-basic-info__title'}).next_element.next.text
+        # results['film_name'] = soup.find('div', {'class': 'film-basic-info__title'}).next_element.next.text
+        results['film_name'] = soup.find('span', {'data-tid': '35f45dae'}).text
         # all_movie_info = soup.find('div', {'class': 'film-info-table'})  # film-info-table_color_scheme_grey'})
-        all_movie_info = soup.find('div', {'data-tid': 'bdb69791'})
+        all_movie_info = soup.find('div', {'data-test-id': 'encyclopedic-table'})
+        # all_movie_info = soup.find('div', {'data-tid': 'bdb69791'})
         for info in all_movie_info.contents:
             # Получаем основные данные о фильме
             if info.contents[0].text == 'Год производства':
@@ -234,13 +245,14 @@ class KinopoiskParser:
                 results['time'] = ftime.strip()
         # Получаем актеров фильма
         # items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents[0].contents
-        items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents
+        items = soup.find('ul', {'class': "styles_list__I97eu"}).contents
+        # items = soup.find('div', {'class': "film-crew-block film-basic-info__film-crew"}).contents[0].contents[1].contents
         for i, item in enumerate(items):
             actors[i] = item.text
-        try:
-            actors.popitem()  # Удаляем актера "...". Во всех фильмах многоточие в конце списка
-        except KeyError:
-            print(results['film_name'], ': Список актеров пуст!')
+        # try:
+        #     actors.popitem()  # Удаляем актера "...". Во всех фильмах многоточие в конце списка
+        # except KeyError:
+        #     print(results['film_name'], ': Список актеров пуст!')
         results['actors'] = actors
 
         # Получаем оценки фильма
@@ -368,7 +380,8 @@ class KinopoiskParser:
         # получаем даты сезонов у сериала
         try:
             # element = self.browser.find_element_by_class_name('table-col-years__seasons')
-            element = self.browser.find_elements_by_class_name('mC3xgnbJn9r8KpG71O4nw')[1]
+            element = self.browser.find_elements_by_class_name('styles_years__3VWqc')[0]
+            # element = self.browser.find_elements_by_class_name('mC3xgnbJn9r8KpG71O4nw')[1]
             self.browser.execute_script("arguments[0].click();", element)
             time.sleep(10)
             get = self.browser.page_source
@@ -458,8 +471,8 @@ class KinopoiskParser:
                 result.find_element_by_tag_name('a').click()
                 break
         try:
-            WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.CLASS_NAME, 'info')))
-            WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID, 'actorList')))
+            # WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.CLASS_NAME, 'info')))
+            # WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID, 'actorList')))
             time.sleep(15)
             get = self.browser.page_source
             self.id_film = os.path.basename(os.path.dirname(self.browser.current_url))
