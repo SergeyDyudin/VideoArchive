@@ -15,6 +15,7 @@ import openpyxl
 from openpyxl.styles import Font
 import re
 import os
+import sys
 
 
 # data_file = r'C:\install\Films.xlsx'  # xlsx-файл для хранения базы данных
@@ -24,6 +25,7 @@ ICON_PATHS = (
     'C:\\Users\\video\\Documents\\Projects\\Films_site\\media\\main\\icons\\',
     '/home/zs-content-02-usr/projects/django/films_site/media/main/icons/'
 )
+system = sys.platform
 
 
 class ProxyManager:
@@ -296,6 +298,9 @@ class KinopoiskParser:
         req = requests.get(url)
         with open(path_to_icons + f'{id_film}_icon.jpg', 'wb') as icon_file:
             icon_file.write(req.content)
+            if path_to_icons != ICON_PATHS[2]:
+                pass
+                # os.system(f'scp ')
             print(f'Загружена иконка для фильма {id_film}')
             return f'main/icons/{id_film}_icon.jpg'
 

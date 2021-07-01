@@ -9,7 +9,9 @@ if os.path.exists('/home/zs-content-02-usr/projects/django/films_site/main/stati
 elif os.path.exists('/Users/sergeydyudin/Documents/PycharmProjects/films_site/main/static/main/img/icons'):
     PATH_TO_ICONS = '/Users/sergeydyudin/Documents/PycharmProjects/films_site/main/static/main/img/icons'
 else:
-    raise 'Добавьте путь к папке иконками на этом PC'
+    raise Exception('Добавьте путь к папке иконками на этом PC')
+
+
 def get_film_icon():
     file_xlsx = Path(__file__).parent.parent.joinpath('database').joinpath('Films.xlsx')
 
@@ -24,6 +26,7 @@ def get_film_icon():
             icon_file.write(req.content)
             print(f'Загружена иконка для фильма {id_film} {id_xlsx}')
     wb.close()
+
 
 if __name__ == "__main__":
     get_film_icon()
