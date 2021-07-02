@@ -10,7 +10,7 @@ def get_xlsx_path():
 
 
 def get_dbauth_file_path():
-    """ Возвращает путь до Films.xlsx, находящегося в каталоге проекта"""
+    """ Возвращает путь до dbauth.txt, находящегося в каталоге проекта"""
     return str(Path(__file__).parent.joinpath('dbauth.txt'))
 
 

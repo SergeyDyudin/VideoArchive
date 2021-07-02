@@ -16,6 +16,7 @@ from openpyxl.styles import Font
 import re
 import os
 import sys
+from db import get_dbauth_file_path
 
 
 # data_file = r'C:\install\Films.xlsx'  # xlsx-файл для хранения базы данных
@@ -298,11 +299,22 @@ class KinopoiskParser:
         req = requests.get(url)
         with open(path_to_icons + f'{id_film}_icon.jpg', 'wb') as icon_file:
             icon_file.write(req.content)
-            if path_to_icons != ICON_PATHS[2]:
-                pass
-                # os.system(f'scp ')
+            self.copy_icon_to_serv(path_to_icons, id_film)
             print(f'Загружена иконка для фильма {id_film}')
             return f'main/icons/{id_film}_icon.jpg'
+
+    @staticmethod
+    def copy_icon_to_serv(path_to_icons, id_film):
+        conn_file = get_dbauth_file_path()
+        with open(conn_file) as file:
+            db_name = file.readline().rstrip()
+            db_user = file.readline().rstrip()
+            db_password = file.readline().rstrip()
+            db_host = file.readline().rstrip()
+        if path_to_icons == ICON_PATHS[1]:
+            os.system(f'C:\\Install\\putty\\PSCP.EXE -P 1919 -pw {db_password} {path_to_icons}{id_film}_icon.jpg {db_user}@{db_host}:{ICON_PATHS[2]}{id_film}_icon.jpg')
+        elif path_to_icons == ICON_PATHS[0]:
+            pass
 
     def find_film_id(self):
         """Нахождение ID фильма по названию и году на Кинопоиске.
