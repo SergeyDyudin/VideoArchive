@@ -471,7 +471,10 @@ class KinopoiskParser:
         search_form.send_keys(self.name_film)
         search_form.submit()
         time.sleep(6)
-        WebDriverWait(self.browser, 10).until(ec.presence_of_all_elements_located((By.CLASS_NAME, 'name')))
+        try:
+            WebDriverWait(self.browser, 10).until(ec.presence_of_all_elements_located((By.CLASS_NAME, 'name')))
+        except Exception:
+            pass
         # получение и обход результатов поиска
         results = self.browser.find_elements_by_class_name('name')
         for result in results:
