@@ -24,6 +24,7 @@ data_file = str(Path(__file__).parent.joinpath('database').joinpath('Films.xlsx'
 ICON_PATHS = (
     '/Users/sergeydyudin/Documents/PycharmProjects/films_site/media/main/icons/',
     'C:\\Users\\video\\Documents\\Projects\\Films_site\\media\\main\\icons\\',
+    '/var/www/films_site/media/main/icons/',
     '/home/zs-content-02-usr/projects/django/films_site/media/main/icons/'
 )
 system = sys.platform
@@ -195,18 +196,18 @@ class KinopoiskParser:
 
         # Получаем оценки фильма
         try:
-            kinopoisk = soup.find('div', {'class': "styles_ratingContainer__24Wyy"}).next_element.next_element.\
-                next_element.text
-            # kinopoisk = soup.find('div', {'class': "block_2"}).find('div', {'class': 'div1'}).text
-            # imdb = soup.find('div', {'class': "block_2"}).find('div', {'class': 'div1'}).nextSibling.nextSibling.text
-            imdb = soup.find('div', {'class': "styles_ratingContainer__24Wyy"}).next_element.next_element.nextSibling.\
-                next_element.text
+            kinopoisk = soup.find('a', {'class': "film-rating-value"}).text
+            imdb = str(soup.find('div', {'class': "film-sub-rating"}).contents[0].contents[-1])
+            # imdb = soup.find('div', {'class': "styles_ratingContainer__24Wyy"}).next_element.next_element.nextSibling.\
+            #     next_element.text
             kinopoisk = kinopoisk.strip().split('\n')[0]
-            imdb = imdb.strip().split()[1]
+            imdb = imdb.strip().split()[0]
             results['kinopoisk'] = kinopoisk
             results['imdb'] = imdb
         except AttributeError:
-            print('Оценок у фильма еще нет')
+            print('Проблема с оценками у фильма. Возможно их еще нет')
+            results.setdefault('kinopoisk', '0')
+            results.setdefault('imdb', '0')
         results['description'] = KinopoiskParser.get_description(soup)
         return results
 
@@ -299,9 +300,9 @@ class KinopoiskParser:
         req = requests.get(url)
         with open(path_to_icons + f'{id_film}_icon.jpg', 'wb') as icon_file:
             icon_file.write(req.content)
-            self.copy_icon_to_serv(path_to_icons, id_film)
-            print(f'Загружена иконка для фильма {id_film}')
-            return f'main/icons/{id_film}_icon.jpg'
+        self.copy_icon_to_serv(path_to_icons, id_film)
+        print(f'Загружена иконка для фильма {id_film}')
+        return f'main/icons/{id_film}_icon.jpg'
 
     @staticmethod
     def copy_icon_to_serv(path_to_icons, id_film):

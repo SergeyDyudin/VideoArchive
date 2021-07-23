@@ -14,8 +14,8 @@ def get_dbauth_file_path():
     return str(Path(__file__).parent.joinpath('dbauth.txt'))
 
 
-DATA_FILE = r'C:\install\Films.xlsx'
-# DATA_FILE = get_xlsx_path()
+# DATA_FILE = r'C:\install\Films.xlsx'
+DATA_FILE = get_xlsx_path()
 CONNECT_FILE = get_dbauth_file_path()
 
 
@@ -32,7 +32,7 @@ class DataBase:
             db_password = file.readline().rstrip()
             db_host = file.readline().rstrip()
         # Вывод данных о базе для тестирования - потом убрать
-        print(f'db = {db_name}', f'user = {db_user}', f'pass = {db_password}', f'host = {db_host}', sep='\n')
+        # print(f'db = {db_name}', f'user = {db_user}', f'pass = {db_password}', f'host = {db_host}', sep='\n')
         try:
             self.conn = psycopg2.connect(database=db_name, user=db_user, password=db_password, host=db_host)
             self.cur = self.conn.cursor()
